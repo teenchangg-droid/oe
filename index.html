@@ -422,6 +422,13 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
 #startScreen .ssGuide{position:absolute;left:50%;bottom:calc(74px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(82vw,300px);background:rgba(255,250,240,.97);color:var(--ink);border-radius:14px;padding:11px 14px;font-size:13px;line-height:1.5;text-align:center;box-shadow:0 4px 16px rgba(91,70,54,.25);display:none}
 #startScreen .ssGuide.on{display:block}
 #startScreen.hide{opacity:0;pointer-events:none}
+#ownerBtn{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;display:none;font:inherit;font-size:14px;font-weight:700;color:var(--ink);background:rgba(255,250,240,.96);border:1px solid rgba(91,70,54,.25);border-radius:999px;padding:9px 18px;box-shadow:0 2px 10px rgba(91,70,54,.22);touch-action:manipulation}
+#ownerBtn.on{display:block}
+#startScreen .ssOwner{display:none;gap:10px}
+#startScreen .ssOwner.on{display:flex}
+#startScreen .ssOwner button{font:inherit;font-size:12px;font-weight:700;color:var(--ink);background:rgba(255,250,240,.75);border:2px solid transparent;border-radius:14px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;touch-action:manipulation}
+#startScreen .ssOwner button.sel{border-color:#f48fb1;background:#fff}
+#startScreen .ssOwner i{display:block;width:44px;height:44px;border-radius:50%;background:center/cover no-repeat}
 #startScreen img{width:min(46vw,220px);height:auto;animation:ssBob 1.8s ease-in-out infinite;pointer-events:none}
 #startScreen .ssT{font-size:22px;font-weight:700;color:var(--ink);pointer-events:none}
 #startScreen .ssB{font-size:17px;font-weight:700;color:var(--ink);background:rgba(255,250,240,.92);border-radius:999px;padding:12px 26px;box-shadow:0 4px 14px rgba(91,70,54,.18);animation:ssPulse 1.6s ease-in-out infinite;pointer-events:none}
@@ -644,7 +651,7 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
 </style>
 </head>
 <body>
-<div id="startScreen"><img src="img/chara/chiikawa.webp" alt=""><div class="ssT">먼작귀의 작은 여름집</div><div class="ssB">터치해서 시작 ♪</div><div class="ssGuide" id="ssGuide"></div><div class="ssInst" id="ssInst"><div class="q">당신의 곁에 이사가도 될까요?</div><div class="bt"><button type="button" id="ssIos">iOS</button><button type="button" id="ssAnd">Android</button></div></div></div>
+<div id="startScreen"><img id="ssImg" src="img/chara/chiikawa.webp" alt=""><div class="ssT">먼작귀의 작은 여름집</div><div class="ssB">터치해서 시작 ♪</div><div class="ssOwner" id="ssOwner"></div><div class="ssGuide" id="ssGuide"></div><div class="ssInst" id="ssInst"><div class="q">당신의 곁에 이사가도 될까요?</div><div class="bt"><button type="button" id="ssIos">iOS</button><button type="button" id="ssAnd">Android</button></div></div></div>
 <div id="stage">
   <div id="world">
     <div id="bgPm"></div>
@@ -934,7 +941,7 @@ function clampPt(x,y){
 
 let S;
 try{S=JSON.parse(localStorage.getItem('cw-save'))}catch(e){}
-S=Object.assign({hGarden:false,gHint0:false,gHint1:false,leftSaid:false,love:72,hunger:70,energy:70,clean:70,hArrived:false,hLove:0,uArrived:false,hHunger:70,hEnergy:70,hClean:70,hHere:false,hStay:0,hNext:0,uStay:0,uNext:0,uLove:20,uHunger:70,uEnergy:70,uClean:70,uDue:false,t:Date.now()},S||{});   // love=치이카와 호감도, hLove=하치와레 호감도(등장 후)
+S=Object.assign({hGarden:false,gHint0:false,gHint1:false,leftSaid:false,love:72,hunger:70,energy:70,clean:70,hArrived:false,owner:'chiikawa',hLove:0,uArrived:false,hHunger:70,hEnergy:70,hClean:70,hHere:false,hStay:0,hNext:0,uStay:0,uNext:0,uLove:20,uHunger:70,uEnergy:70,uClean:70,uDue:false,t:Date.now()},S||{});   // love=치이카와 호감도, hLove=하치와레 호감도(등장 후)
 let sleeping=false;
 function decay(min){
   S.hunger=clamp(S.hunger-1.2*min,0,100);
@@ -1316,7 +1323,13 @@ stage.addEventListener('pointerdown',e=>{
 // ---- 캐릭터 제스처: 문지르면 쓰다듬기(웃음), 톡 한 번 치면 "아야!" ----
 let pet=null,lastPet=0,statOn=false,lpT;
 let statWho='c';
-function showStat(on,who){statOn=on;if(on)statWho=who||'c';ch.classList.toggle('stat',on&&statWho==='c');hc.classList.toggle('stat',on&&statWho==='h');uc.classList.toggle('stat',on&&statWho==='u');renderStats()}
+// ---- 별장 주인 정하기: 상태창이 떠 있을 때 열린 캐릭터에게 버튼이 나와요 (주인 값은 S.owner에 저장) ----
+const ownerBtn=document.createElement('button');ownerBtn.id='ownerBtn';ownerBtn.type='button';document.body.appendChild(ownerBtn);
+const OWN_KEY={c:'chiikawa',h:'hachiware',u:'usagi'};
+function ownerBtnUpdate(){const k=OWN_KEY[statWho];const show=statOn&&k&&CHARS[k].on()&&S.owner!==k;ownerBtn.classList.toggle('on',!!show);if(show)ownerBtn.textContent='🏠 별장 주인으로 정하기'}
+ownerBtn.addEventListener('pointerdown',e=>e.stopPropagation());
+ownerBtn.addEventListener('click',()=>{const k=OWN_KEY[statWho];if(!k||!CHARS[k].on())return;S.owner=k;save();ownerBtn.textContent='✅ 정했어요!';setTimeout(()=>showStat(false),700)});
+function showStat(on,who){statOn=on;if(on)statWho=who||'c';ch.classList.toggle('stat',on&&statWho==='c');hc.classList.toggle('stat',on&&statWho==='h');uc.classList.toggle('stat',on&&statWho==='u');renderStats();ownerBtnUpdate()}
 function overChar(e){const c=ch.getBoundingClientRect();return e.clientX>=c.left&&e.clientX<=c.right&&e.clientY>=c.top&&e.clientY<=c.bottom}
 stage.addEventListener('pointermove',e=>{
   if(!pet||sleeping)return;
@@ -2369,6 +2382,12 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.
 // ---- 시작 화면: 터치하면 음악과 함께 시작 (자동재생이 이미 되면 알아서 사라져요) ----
 (function(){
   const ss=document.getElementById('startScreen');if(!ss)return;
+  {const row=ss.querySelector('#ssOwner'),img=ss.querySelector('#ssImg'),NM={chiikawa:'치이카와',hachiware:'하치와레',usagi:'우사기'};   // 열린 캐릭터가 둘 이상이면 시작화면에서 주인을 고를 수 있어요
+   const ks=Object.keys(CHARS).filter(k=>CHARS[k].on());if(!CHARS[S.owner]||!CHARS[S.owner].on())S.owner='chiikawa';
+   const paint=()=>{img.src=S.owner==='chiikawa'?'img/chara/chiikawa.webp':CHARS[S.owner].face;row.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b.dataset.k===S.owner))};
+   if(ks.length>1){row.classList.add('on');row.innerHTML=ks.map(k=>'<button type="button" data-k="'+k+'"><i style="background-image:url('+CHARS[k].face+')"></i>'+NM[k]+'</button>').join('');
+    row.addEventListener('pointerdown',e=>{e.stopPropagation();const b=e.target.closest('button');if(b){S.owner=b.dataset.k;save();paint()}})}
+   paint()}
   let gone=false;
   function hide(){if(gone)return;gone=true;ss.classList.add('hide');setTimeout(()=>ss.remove(),700)}
   function go(e){
