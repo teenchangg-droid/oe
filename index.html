@@ -558,6 +558,25 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
 .gspot{z-index:1;width:64px;height:64px;transform:translate(-50%,-50%);border:0;border-radius:50%;padding:0;font-size:28px;display:flex;align-items:center;justify-content:center;pointer-events:auto;background:radial-gradient(circle,rgba(255,255,215,.95) 0 22%,rgba(255,244,160,.55) 48%,rgba(255,244,160,0) 72%);animation:gtw 1.8s ease-in-out infinite}
 @keyframes gtw{50%{transform:translate(-50%,-50%) scale(1.18);filter:brightness(1.15)}}
 .gspot.pick{animation:none;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.35);transition:left .5s ease-in,top .5s ease-in,opacity .5s,transform .5s}
+/* ---- 레시피 도감: 만든 요리가 책 칸에 하나씩 채워져요 ---- */
+#rcView{position:absolute;inset:0;z-index:1900;display:none;opacity:0;transition:opacity .45s;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#f6e5bf,#d9ae6c 75%);touch-action:manipulation;-webkit-user-select:none;user-select:none}
+#rcView.on{display:block}#rcView.show{opacity:1}
+#rcWrap{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 72px);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#rcStage{position:relative;transform:translate(var(--rdx,0px),var(--rdy,0px)) scale(var(--rz,1));transition:transform .38s ease}
+#rcImg{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;filter:drop-shadow(0 6px 14px rgba(90,60,20,.35))}
+#rcSlots{position:absolute;inset:0;transition:opacity .2s}
+#rcSlots.out{opacity:0}
+.rcT{position:absolute;transform:translate(-50%,-50%);text-align:center;white-space:nowrap;font-weight:800;color:#6b4510;font-size:max(8px,calc(var(--u)*21));line-height:1}
+.rcE{position:absolute;transform:translate(-50%,-50%);width:calc(var(--u)*150);height:calc(var(--u)*150);display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle,rgba(255,252,240,.92) 0 38%,rgba(255,252,240,0) 70%);font-size:calc(var(--u)*86);line-height:1}
+.rcE span.no{filter:brightness(0);opacity:.22}
+.rcL{position:absolute;transform:translateY(-50%);white-space:nowrap;font-weight:700;color:#7a5a2e;font-size:max(7px,calc(var(--u)*20));line-height:1}
+#rcBar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 12px calc(env(safe-area-inset-bottom,0px) + 14px)}
+#rcBar button{width:46px;height:46px;border:0;border-radius:50%;font-size:20px;font-weight:800;color:var(--ink);background:rgba(255,250,240,.94);box-shadow:0 2px 8px rgba(90,60,20,.35);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s,opacity .2s}
+#rcBar button:active{transform:scale(.92)}#rcBar button[disabled]{opacity:.35}
+#rcBar.one #rcPrev,#rcBar.one #rcNext,#rcBar.one #rcPage{display:none}
+#rcPage{min-width:64px;text-align:center;color:#fff;font-weight:800;font-size:16px;text-shadow:0 1px 4px rgba(90,60,20,.7)}
+#rcRot{display:none;position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 24px);text-align:center;color:rgba(255,255,255,.9);font-size:13px;font-weight:700;text-shadow:0 1px 4px rgba(90,60,20,.7);pointer-events:none}
+#rcRot.on{display:block}
 /* ---- 첫 요리: 레시피 도감 발견 연출 ---- */
 #ckIntro{position:absolute;inset:0;z-index:1800;display:none;opacity:0;transition:opacity .8s;overflow:hidden;background:#d9a85c}
 #ckIntro.on{display:block}#ckIntro.show{opacity:1}
@@ -613,10 +632,6 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
 #ckRes{position:absolute;left:0;right:0;top:34%;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;transition:opacity .4s;pointer-events:none}#ckRes.on{opacity:1}
 #ckRes .p{background:rgba(255,250,240,.95);color:var(--ink);border-radius:999px;padding:.35em 1em;font-size:15px;font-weight:800}
 #ckRes .d{font-size:70px;line-height:1}
-#ckDexBox{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:rgba(40,28,18,.7)}#ckDexBox.on{display:flex}
-#ckDexBox .in{background:rgba(255,250,240,.97);border-radius:22px;padding:18px;width:min(86vw,360px);color:var(--ink)}
-#ckDexBox .g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;text-align:center;font-size:12px;font-weight:700}#ckDexBox .g b{display:block;font-size:34px}
-#ckDexBox .g .no b{filter:brightness(0);opacity:.25}
 #cookBtn{left:1250px;top:510px}
 #bkFish{position:absolute;opacity:0;transition:opacity .35s;pointer-events:none}
 #bkFish.on{opacity:1}
@@ -770,15 +785,19 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
     <div id="ciText"></div>
     <div id="ciHint">화면을 눌러 계속하기</div>
   </div>
+  <div id="rcView">
+    <div id="rcWrap"><div id="rcStage"><img id="rcImg" src="img/minigame/cook/recipe-book.webp" alt="" draggable="false"><div id="rcSlots"></div></div></div>
+    <div id="rcRot">폰을 가로로 돌리면 더 크게 볼 수 있어요</div>
+    <div id="rcBar"><button id="rcPrev" aria-label="이전">◀</button><span id="rcPage"></span><button id="rcNext" aria-label="다음">▶</button><button id="rcClose" aria-label="레시피 도감 닫기">✕</button></div>
+  </div>
   <div id="ckV">
     <div class="ckBg" id="ckB1"></div><div class="ckBg" id="ckB2"></div>
     <div id="ckSink"><div class="sk" style="background-image:url(img/bg/sink-0.webp)"></div><div class="sk" style="background-image:url(img/bg/sink-1.webp)"></div><div class="sk" style="background-image:url(img/bg/sink-2.webp)"></div><div class="sk" style="background-image:url(img/bg/sink-3.webp)"></div><div class="sk" style="background-image:url(img/bg/sink-4.webp)"></div><button id="ckTap"></button><button id="ckHot"></button><i id="ckSpk"></i></div>
     <img id="ckChi" src="img/chara/chiikawa.webp" alt="" draggable="false">
     <div id="ckSay"></div><div id="ckRes"></div>
-    <button id="ckBack">◀ 그만하기</button><button id="ckDex">📖 요리 모음</button>
+    <button id="ckBack">◀ 그만하기</button><button id="ckDex">📖 레시피 도감</button>
     <div id="ckStoveBox"><div id="ckPot">🍲</div><div id="ckGauge"><div id="ckMk"></div></div><button id="ckStop">🔥 불 끄기!</button></div>
     <div id="ckPickBox"><div id="ckSlots"></div><div id="ckTray"></div><button id="ckGo">요리하기!</button></div>
-    <div id="ckDexBox"><div class="in"><b>📖 요리 모음</b><div class="g" id="ckDexG"></div></div></div>
   </div>
   <div id="catchPop"></div>
   <div id="fishGet">
@@ -1252,7 +1271,7 @@ let lastTap={t:0,x:0,y:0};
 stage.addEventListener('pointerdown',e=>{
   knockTok++;knocking=false;   // 터치하면 노크 연출은 접어요
   if(statOn){showStat(false);pet=null;return}   // 상태창이 떠 있으면 한 번 더 터치해서 닫기
-  if(fEvt||e.target.closest('.ui,#fan,.door,.hot,#tubView,#washView,.ffly,#fishGet,#bookView,#ckV,#ckIntro'))return;
+  if(fEvt||e.target.closest('.ui,#fan,.door,.hot,#tubView,#washView,.ffly,#fishGet,#bookView,#ckV,#ckIntro,#rcView'))return;
   if(HA.on&&!hEvt&&!hLeaving){   // 놀러 온 하치와레를 눌렀거나 문지르는 중 (치이카와와 겹치면 앞에 있는 쪽)
     const hr=hc.getBoundingClientRect(),cr=ch.getBoundingClientRect();
     const onH=e.clientX>=hr.left&&e.clientX<=hr.right&&e.clientY>=hr.top&&e.clientY<=hr.bottom;
@@ -2040,7 +2059,7 @@ $('#bkPrev').addEventListener('click',()=>bkFlip(-1));
 $('#bkNext').addEventListener('click',()=>bkFlip(1));
 bkV.addEventListener('pointerdown',e=>{bkX=e.clientX;bkY=e.clientY;bkTapOK=!e.target.closest('#bkBar,#bkClose')});
 bkV.addEventListener('pointerup',e=>{if(bkX==null)return;const dx=e.clientX-bkX,dy=e.clientY-bkY;bkX=null;if(Math.abs(dx)>45)bkFlip(dx<0?1:-1);else if(Math.abs(dx)<10&&Math.abs(dy)<10&&bkTapOK)bkTap(e)});
-['#fishGet','#bookView','#ckIntro'].forEach(sel=>['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>$(sel).addEventListener(t,e=>e.stopPropagation())));   // 낚시·도감 화면 위에서는 캐릭터가 걸어가지 않게
+['#fishGet','#bookView','#ckIntro','#rcView'].forEach(sel=>['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>$(sel).addEventListener(t,e=>e.stopPropagation())));   // 낚시·도감 화면 위에서는 캐릭터가 걸어가지 않게
 addEventListener('resize',()=>{if(bkOn)bkFit()});addEventListener('orientationchange',()=>setTimeout(()=>{if(bkOn)bkFit()},250));
 renderBookBtn(false);
 
@@ -2604,7 +2623,7 @@ async function cookOpen(){
   if(ck.on||sleeping||moving||hEvt||(curRoom!=='kitchen'&&curRoom!=='living'))return;
   if(!S.cookIntro){await cookIntro();if(sleeping||moving||hEvt)return}
   if(!Object.values(S.pan||{}).some(n=>n>0)){say('재료가 없어… 낚시터나 숲에서 모아보자!',2600);return}
-  [0,1,2,3,4].forEach(i=>{new Image().src='img/bg/sink-'+i+'.webp'});ck.on=true;hEvt=true;ck.sel=[];ck.step='intro';ckV.dataset.s='counter';ckV.className='on';ckRender();ckPlace();
+  [0,1,2,3,4].forEach(i=>{new Image().src='img/bg/sink-'+i+'.webp'});new Image().src='img/minigame/cook/recipe-book.webp';ck.on=true;hEvt=true;ck.sel=[];ck.step='intro';ckV.dataset.s='counter';ckV.className='on';ckRender();ckPlace();
   void ckV.offsetWidth;ckV.classList.add('show','chi');
   await waitMs(800);ckSay('요리 시작~!');await waitMs(1500);ckSay('');
   ck.step='pick';ckV.classList.remove('chi');ckV.classList.add('pick');
@@ -2682,23 +2701,78 @@ async function cookGo(){
   ckSay('냠냠…'+(first?' (후후 후…)':''));await waitMs(first?2200:1100);
   ckSay(good?'맛있어~!':'조금 탔지만 맛있어!');
   const parts=[];if(fxs.h)parts.push('배고픔 +'+Math.round(fxs.h));if(fxs.g)parts.push('기운 +'+Math.round(fxs.g));if(fxs.c)parts.push('청결 +'+Math.round(fxs.c));parts.push('호감도 +'+Math.round(fxs.l+1));
-  $('#ckRes').innerHTML=`<div class="d">${D[0]}</div>`+(isNew?'<span class="p">✨ 새 요리! 요리 모음에 기록했어요</span>':'')+`<span class="p">${parts.join(' · ')}</span>`;
+  $('#ckRes').innerHTML=`<div class="d">${D[0]}</div>`+(isNew?'<span class="p">✨ 새 요리! 레시피 도감에 기록했어요</span>':'')+`<span class="p">${parts.join(' · ')}</span>`;
   $('#ckRes').classList.add('on');renderStats();save();
   await waitMs(first?3200:2400);$('#ckRes').classList.remove('on');ckSay('');
   cookClose();setTimeout(()=>say('잘 먹었습니다~!',2000),700);
 }
-function ckDexShow(on){
-  if(on)$('#ckDexG').innerHTML=Object.keys(DISH).map(k=>{const c=(S.dex||{})[k];return `<div class="${c?'':'no'}"><b>${DISH[k][0]}</b>${c?DISH[k][1]+' ×'+c:'？？？'}</div>`}).join('');
-  $('#ckDexBox').classList.toggle('on',on);
+// ---- 레시피 도감 (책 그림 위에 만든 요리를 칸마다 채워요. 한 쪽에 6칸, 요리가 늘면 다음 장으로) ----
+const RC_W=1509,RC_H=1042;
+const RC_FR=[[288,330],[290,527],[286,730],[921,312],[925,519],[927,726]];      // 그림 칸 가운데
+const RC_BAR=[[276,255],[275,451],[272,650],[908,231],[911,437],[913,645]];     // 이름 띠
+const RC_LN=[[470,289,324],[470,490,525],[470,692,727],[1100,272,308],[1100,484,520],[1100,691,727]];   // 줄 글씨: 왼쪽 x, 첫째 줄 y, 둘째 줄 y
+const RC_ING={fish:'물고기',herb:'허브',mush:'버섯',fruit:'열매·꽃',rare:'특별한 재료'};
+const rcIng=k=>k==='mix'?'여러 재료를 섞어서':k.split('+').map(x=>RC_ING[x]||x).join(' + ');
+let rcOn=false,rcPage=0,rcZ=null;
+const rcV=$('#rcView'),rcS=$('#rcStage');
+const rcPc=(x,y)=>`left:${(x/RC_W*100).toFixed(2)}%;top:${(y/RC_H*100).toFixed(2)}%`;
+function rcZoomApply(){
+  const s=rcS.style;
+  if(!rcZ){s.setProperty('--rz',1);s.setProperty('--rdx','0px');s.setProperty('--rdy','0px');return}
+  const w=$('#rcWrap'),W0=w.clientWidth,H0=w.clientHeight,sw=rcS.clientWidth,sh=rcS.clientHeight,sc=sw/RC_W;
+  const cx=(rcZ==='L'?440:1075)*sc,cy=500*sc,z=clamp(Math.min(W0*.96/(700*sc),H0*.96/(900*sc)),1.15,3);
+  s.setProperty('--rz',z.toFixed(3));s.setProperty('--rdx',(-(cx-sw/2)*z).toFixed(1)+'px');s.setProperty('--rdy',(-(cy-sh/2)*z).toFixed(1)+'px');
 }
+function rcFit(){
+  const w=$('#rcWrap'),s=Math.min(w.clientWidth/RC_W,w.clientHeight/RC_H);
+  rcS.style.width=Math.floor(RC_W*s)+'px';rcS.style.height=Math.floor(RC_H*s)+'px';rcS.style.setProperty('--u',s+'px');
+  $('#rcRot').classList.toggle('on',innerHeight>innerWidth);rcZoomApply();
+}
+function rcRender(){
+  const keys=Object.keys(DISH),pages=Math.max(1,Math.ceil(keys.length/6)),d=S.dex||{};let h='';
+  for(let i=0;i<6;i++){
+    const k=keys[rcPage*6+i];if(!k)break;const n=d[k],em=DISH[k][0],nm=DISH[k][1],ln=RC_LN[i];
+    h+=`<div class="rcT" style="${rcPc(RC_BAR[i][0],RC_BAR[i][1])}">${n?nm:'？？？'}</div>`;
+    h+=`<div class="rcE" style="${rcPc(RC_FR[i][0],RC_FR[i][1])}"><span class="${n?'':'no'}">${em}</span></div>`;
+    if(n){
+      h+=`<div class="rcL" style="${rcPc(ln[0],ln[1]-9)}">${n}번 만들었어요</div>`;
+      h+=`<div class="rcL" style="${rcPc(ln[0],ln[2]-9)}">${rcIng(k)}</div>`;
+    }
+  }
+  $('#rcSlots').innerHTML=h;
+  $('#rcPage').textContent=(rcPage+1)+' / '+pages;
+  $('#rcPrev').disabled=rcPage<=0;$('#rcNext').disabled=rcPage>=pages-1;$('#rcBar').classList.toggle('one',pages<2);
+}
+function rcZoom(side){rcZ=side;rcZoomApply()}
+function rcFlip(dir){
+  const pages=Math.max(1,Math.ceil(Object.keys(DISH).length/6)),to=rcPage+dir;if(to<0||to>=pages)return;
+  if(rcZ)rcZoom(null);const sl=$('#rcSlots');sl.classList.add('out');
+  setTimeout(()=>{rcPage=to;rcRender();sl.classList.remove('out')},200);
+}
+function rcOpen(){
+  if(rcOn)return;rcOn=true;rcPage=0;rcZ=null;rcRender();
+  rcV.classList.add('on');rcFit();void rcV.offsetWidth;rcV.classList.add('show');
+}
+function rcClose(){
+  if(!rcOn)return;rcOn=false;rcZ=null;rcZoomApply();rcV.classList.remove('show');
+  setTimeout(()=>{if(!rcOn)rcV.classList.remove('on')},470);
+}
+addEventListener('resize',()=>{if(rcOn)rcFit()});
+$('#rcWrap').addEventListener('click',e=>{   // 왼쪽 페이지를 누르면 왼쪽이, 오른쪽 페이지를 누르면 오른쪽이 크게 보여요. 한 번 더 누르면 원래대로
+  if(!rcOn)return;if(rcZ){rcZoom(null);return}
+  const r=rcS.getBoundingClientRect(),nx=(e.clientX-r.left)/r.width*RC_W,ny=(e.clientY-r.top)/r.height*RC_H;
+  if(nx<60||nx>1450||ny<40||ny>930)return;rcZoom(nx<RC_W*.497?'L':'R');
+});
+$('#rcPrev').addEventListener('click',()=>rcFlip(-1));
+$('#rcNext').addEventListener('click',()=>rcFlip(1));
+$('#rcClose').addEventListener('click',rcClose);
 $('#ckGo').addEventListener('click',cookGo);
 $('#ckBack').addEventListener('click',()=>{if(ck.step==='pick')cookClose()});
-$('#ckDex').addEventListener('click',()=>ckDexShow(true));
-$('#ckDexBox').addEventListener('click',()=>ckDexShow(false));
+$('#ckDex').addEventListener('click',rcOpen);
 $('#ckPot').addEventListener('click',e=>{const p=e.currentTarget;p.classList.remove('stir');void p.offsetWidth;p.classList.add('stir')});
 ['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>ckV.addEventListener(t,e=>e.stopPropagation()));
 $('#world2').insertAdjacentHTML('beforeend','<button class="door" id="cookBtn"><b>🍳</b>요리하기</button>');
-$('#world').insertAdjacentHTML('beforeend','<button class="door" id="cookBtn2" style="left:400px;top:735px"><b>🍳</b>요리하기</button>');   // 거실에서도 요리할 수 있어요
+$('#world').insertAdjacentHTML('beforeend','<button class="door" id="cookBtn2" style="left:329px;top:570px"><b>🍳</b>요리하기</button>');   // 거실에서도 요리할 수 있어요
 
 // ---- 숲 채집: 풀숲·나무 밑에서 반짝이는 재료를 주워요 (최대 5곳, 줍고 나면 3~15분 뒤 새 자리가 랜덤으로 생겨요) ----
 const GZ={   // 구역별 재료와 자리 후보 (숲 그림 좌표)
