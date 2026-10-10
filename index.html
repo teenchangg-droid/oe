@@ -1,0 +1,2657 @@
+<!doctype html>
+<html lang="ko">
+<!--
+[Claude에게] 이 프로젝트 파일을 수정해서 사용자에게 줄 때는, 답변마다 수정한 파일 각각을 GitHub 저장소의 어느 폴더(경로)에 올려야 하는지 항상 알려주세요. 사용자는 아이패드로 GitHub 웹에서 올려요.
+
+[올릴 위치] 이 파일(index.html)은 GitHub 저장소 맨 바깥(루트)에 올려요.
+
+먼작귀의 작은 여름집 — GitHub 저장소 폴더 구조 (파일은 반드시 이 위치에 올려야 해요)
+
+  (저장소 맨 바깥)  index.html, sw.js, manifest.json, icon-192.png, icon-512.png
+  audio/                      소리 파일(.mp3)
+  fonts/                      폰트(berry.woff)
+  splash/                     아이폰 시작 화면 그림
+  img/bg/                     배경 그림
+  img/chara/                  캐릭터 그림
+  img/signs/                  표지판 그림
+  img/ui/                     커튼 등 화면 장식
+  img/minigame/fishing/       낚시 그림
+  img/minigame/wash/          씻기 그림
+  img/minigame/fan/           부채 그림
+  img/minigame/dex/           도감 그림
+  img/minigame/ingredients/   재료 그림(ing-01~52)
+
+주의: 그림·소리를 새로 추가하면 sw.js 안의 파일 목록(const F=[...])에도 같은 경로를 넣어야 하고,
+      목록에 없는 경로가 하나라도 있으면 서비스 워커 설치가 실패해요. 고친 뒤에는 캐시 이름(const C=...)의 번호도 올려 주세요.
+-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#3d2c22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="여름집">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-startup-image" href="splash/s-1125x2436.png" media="(device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1170x2532.png" media="(device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1179x2556.png" media="(device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1206x2622.png" media="(device-width:402px) and (device-height:874px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1242x2208.png" media="(device-width:414px) and (device-height:736px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1242x2688.png" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1260x2736.png" media="(device-width:420px) and (device-height:912px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1284x2778.png" media="(device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1290x2796.png" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1320x2868.png" media="(device-width:440px) and (device-height:956px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-640x1136.png" media="(device-width:320px) and (device-height:568px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-750x1334.png" media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-828x1792.png" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)">
+<script>
+// 시작 화면 이미지를 기기 화면 크기에 맞춰 자동 생성 (iOS 홈 화면 앱이 화면 전체를 쓰게 하는 데 필요)
+(function(){try{
+  var sw=Math.min(screen.width,screen.height),sh=Math.max(screen.width,screen.height),d=window.devicePixelRatio||1;
+  var img=new Image();
+  function make(cw,ch,o){
+    var c=document.createElement('canvas');c.width=Math.round(cw*d);c.height=Math.round(ch*d);
+    var x=c.getContext('2d');x.fillStyle='#f3e6c8';x.fillRect(0,0,c.width,c.height);
+    if(img.naturalWidth){var s=Math.min(c.width,c.height)*.38/img.naturalWidth,w=img.naturalWidth*s,hh=img.naturalHeight*s;x.drawImage(img,(c.width-w)/2,(c.height-hh)/2,w,hh)}
+    var l=document.createElement('link');l.rel='apple-touch-startup-image';l.href=c.toDataURL('image/png');
+    l.media='(device-width:'+sw+'px) and (device-height:'+sh+'px) and (-webkit-device-pixel-ratio:'+d+') and (orientation:'+o+')';
+    document.head.appendChild(l);
+  }
+  function go(){make(sw,sh,'portrait');make(sh,sw,'landscape')}
+  img.onload=go;img.onerror=go;img.src='img/chara/chiikawa.webp';
+}catch(e){}})();
+</script>
+<title>먼작귀의 작은 여름집</title>
+<style>
+:root{--z:1;--room:url(img/bg/room1.webp);--card:rgba(255,250,240,.9);--ink:#5b4636;--pink:#f4a9a8;--blue:#8fb8e8;--green:#a8d08d;--line:rgba(91,70,54,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{position:fixed;inset:0;width:100%;height:100%;margin:0;padding:0;overflow:hidden;touch-action:manipulation;overscroll-behavior:none;background-color:#2a1f16}
+@font-face{font-family:"Berry";src:url(fonts/berry.woff) format("woff");font-weight:400 700;font-display:swap}
+body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;color:var(--ink)}
+/* 핸드폰 전체화면 */
+#stage{position:fixed;left:0;top:0;right:0;bottom:0;overflow:hidden;background:#e9d9b5;touch-action:none}
+/* 월드 = 방 그림 크기(1536x1024) 그대로. 화면에 맞춰 확대하고 캐릭터를 따라 카메라가 움직여요 */
+#world{position:absolute;left:0;top:0;width:1536px;height:1024px;transform-origin:0 0;background:var(--room) 0 0/100% 100% no-repeat;will-change:transform}
+#bgSet,#bgEve{filter:saturate(1.12) contrast(1.04)}
+#bgTw,#bgNt,#bgN2,#bgN3{filter:saturate(1.1) contrast(1.04)}
+#stage.noanim,#stage.noanim *{transition:none!important}
+#bgPm{position:absolute;inset:0;z-index:0;opacity:0;background:url(img/bg/room-afternoon.webp) 0 0/100% 100% no-repeat}
+#bgSet{position:absolute;inset:0;z-index:0;opacity:0;background:url(img/bg/room-sunset.webp) 0 0/100% 100% no-repeat}
+#bgEve{position:absolute;inset:0;z-index:0;opacity:0;background:url(img/bg/room-dusk.webp) 0 0/100% 100% no-repeat}
+#bgTw{position:absolute;inset:0;z-index:0;opacity:0;background:url(img/bg/room-twilight.webp) 0 0/100% 100% no-repeat}
+#stage.tw{--fanimg:url(img/minigame/fan/fan-twilight.webp)}
+#stage.tw #flip{filter:sepia(0) hue-rotate(0deg) saturate(1.05) brightness(.86)}
+#stage.tw .curt img{filter:sepia(0) hue-rotate(0deg) saturate(.9) brightness(.8)}
+#bgNt{position:absolute;inset:0;z-index:0;opacity:0;background:url(img/bg/room-night.webp) 0 0/100% 100% no-repeat}
+#bgN2{position:absolute;inset:0;z-index:0;opacity:0;background:url(img/bg/room-latenight.webp) 0 0/100% 100% no-repeat}
+#bgN3{position:absolute;inset:0;z-index:0;opacity:0;background:url(img/bg/room-midnight.webp) 0 0/100% 100% no-repeat}
+#stage.nt{--fanimg:url(img/minigame/fan/fan-night.webp)}
+#stage.nt #flip{filter:sepia(0) hue-rotate(0deg) saturate(1.05) brightness(.78)}
+#stage.nt .curt img{filter:sepia(0) hue-rotate(0deg) saturate(.9) brightness(.7)}
+#tint{position:absolute;inset:0;pointer-events:none;z-index:2;transition:background 2.5s}
+/* 레이스 커튼 (방 투시에 맞춰 문틀 윗선을 따라 잘라서 배치) */
+.curt{position:absolute;pointer-events:none;z-index:3;clip-path:var(--clip)}
+.curt .in{width:100%;height:100%;transform-origin:50% 0;animation:sway var(--d) ease-in-out infinite alternate;will-change:transform}
+.curt img{display:block;width:100%;height:100%;opacity:.92;transition:filter 2.5s;filter:none}
+/* 저녁 무렵엔 커튼에도 주황빛을 더 얹음 */
+#stage.dusk1 .curt img{filter:sepia(.4) hue-rotate(-14deg) saturate(1.8) brightness(.97)}
+#stage.dusk2 .curt img{filter:sepia(.55) hue-rotate(-26deg) saturate(2.2) brightness(.95)}
+#cL{left:742px;top:95px;width:150px;height:575px;--d:6.5s;--d2:3.6s;--clip:polygon(-30px 58px,calc(100% + 30px) 22.7px,calc(100% + 30px) calc(100% + 40px),-30px calc(100% + 40px))}
+#cR{left:1148px;top:20px;width:267px;height:730px;--d:8s;--d2:4.4s;--clip:polygon(-30px 65px,100% 14.4px,100% calc(100% + 40px),-30px calc(100% + 40px))}
+#cR .in{animation-delay:-3s;animation-direction:alternate-reverse}
+@keyframes sway{0%{transform:skewX(-1.3deg) scaleX(1)}50%{transform:skewX(.9deg) scaleX(1.025)}100%{transform:skewX(-.4deg) scaleX(.985)}}
+.ui{position:absolute;z-index:999}
+.card{background:var(--card);border-radius:18px;box-shadow:0 2px 10px rgba(91,70,54,.18)}
+#top{left:calc(env(safe-area-inset-left,0px) + 12px);right:calc(env(safe-area-inset-right,0px) + 12px);top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:700}
+.pill{padding:.55em .9em;border-radius:999px;display:flex;align-items:center;gap:.4em;white-space:nowrap}
+/* 호감도 표시: 캐릭터마다 얼굴 배지와 색이 달라요 (--cc 테두리색 / --cb 바탕색 / --ci 글자색) */
+#lovePill{--cc:#f48fb1;--cb:#ffe9f0;--ci:#b83b6b;background:var(--cb);color:var(--ci);padding:.28em .9em .28em .28em;gap:.35em;cursor:pointer;box-shadow:0 0 0 2px var(--cc) inset,0 2px 10px rgba(91,70,54,.18);transition:background .3s,box-shadow .3s,color .3s}
+#faceB{width:34px;height:34px;flex:none;background:center/contain no-repeat}
+#lovePill #love{font-size:15px;font-weight:800;min-width:1.4em}
+/* 상태창: 캐릭터를 꾹 누르면 머리 위에 뜨고, 한 번 더 터치하면 사라져요 */
+#stat,#hstat,#ustat{position:absolute;left:50%;bottom:100%;margin-bottom:18px;width:210px;padding:12px 16px;z-index:1;font-size:15px;background:var(--card);border-radius:20px;box-shadow:0 2px 10px rgba(91,70,54,.22);transform:translateX(-50%) scale(calc(.85*var(--z)));transform-origin:50% 100%;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#stat:after,#hstat:after,#ustat:after{content:"";position:absolute;left:50%;top:100%;margin-left:-9px;border:9px solid transparent;border-top-color:var(--card)}
+#stat .name,#hstat .name,#ustat .name{font-weight:700;margin-bottom:6px}
+#hc.stat #hstat,#uc.stat #ustat,#char.stat #stat{opacity:1;transform:translateX(-50%) scale(var(--z))}
+#hc.stat #hbub{margin-bottom:calc(190px*var(--z))}
+#uc.stat #ubub{margin-bottom:calc(190px*var(--z))}
+#char.stat #bubble{margin-bottom:calc(190px*var(--z))}
+.row{display:flex;align-items:center;gap:6px;margin:7px 0}
+.row span{width:3.2em;flex:none}
+.bar{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .6s}
+#mood{margin-top:8px;font-weight:700}
+#menu{left:50%;transform:translateX(-50%);width:min(calc(100% - 24px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)),520px);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px}
+#menu button{border:0;background:rgba(255,255,255,.6);border-radius:14px;padding:9px 0 8px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:transform .12s,background .2s}
+#menu button b{font-size:24px;line-height:1}
+#menu button.off{opacity:.4}
+#menu button:active{transform:scale(.93);background:#ffe7e0}
+/* 캐릭터 */
+#char{position:absolute;left:0;top:0;transform:translate(-50%,-100%);will-change:transform}
+#char img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
+#body{position:relative}
+#char img.f{position:absolute;left:0;top:0;visibility:hidden}
+#char img.f.oc{position:static;visibility:visible}
+#char.mouth img.oc,#char.blink img.oc{visibility:hidden}
+#char.mouth:not(.blink) img.oo{visibility:visible}
+#char.blink:not(.mouth) img.cc{visibility:visible}
+#char.mouth.blink img.co{visibility:visible}
+#char.hurt1 img.f:not(.h1),#char.hurt2 img.f:not(.h2){visibility:hidden}
+#char.hurt1 img.h1,#char.hurt2 img.h2{visibility:visible}
+#char img.f.h3{top:auto;bottom:0;visibility:visible;opacity:0;transition:opacity .1s linear}   /* 깜짝 그림은 항상 깔아 두고 투명도만 바꿔서, 원래 모습과 겹치며 스르륵 바뀌어요 */
+#char.hurt3 img.f.h3{opacity:1;transition:opacity .1s linear}
+#char.hurt3 img.f:not(.h3){visibility:hidden!important}   /* 놀란 그림이 뜨는 동안 원래 그림은 숨겨서, 윤곽이 두 겹으로 겹쳐 보이지 않아요 */
+#char.hurt3 #bubble{margin-bottom:26px}   /* 놀란 그림은 위로 더 길고 반짝선이 있어서, 말풍선을 조금 더 위로 띄워요 */   /* 놀란 그림은 느낌표 때문에 위로 조금 더 길어서, 아래를 맞춰요 */
+/* 노래할 땐 부끄러워서 얼굴이 서서히 빨개져요 (1.2초). 기존 그림 위에 붉은 기운만 곱해서, 눈 감고 입 뻐끔거리는 모습은 그대로예요 */
+#shyL{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;opacity:0;mix-blend-mode:multiply;visibility:hidden;transition:opacity 1.2s ease-in-out,visibility 0s 1.2s}
+#shyL img{position:absolute;left:0;top:0;width:100%;height:auto}
+#char.blink #shyL img.b,#char:not(.blink) #shyL img.a{visibility:hidden}   /* 눈 감았을 땐 붉은 기운 그대로(a), 눈 떴을 땐 눈 자리를 뺀 것(b) → 눈이 안 빨개져요 */
+#char.shy #shyL{opacity:1;visibility:visible;transition:opacity 1.2s ease-in-out}
+#char.hurt1 #shyL,#char.hurt2 #shyL{opacity:0;transition:none}
+#char.hurt3 #shyL{opacity:0;visibility:visible;transition:opacity .22s ease-out}   /* 깜짝 땐 붉은 기운도 같이 스르륵 */   /* 맞았을 땐 바로 사라져요 (그림 크기가 달라서) */
+#char.talking img{animation:talk .34s ease-in-out infinite;transform-origin:50% 100%}
+#flip{transition:transform .25s,filter 2.5s;filter:none}
+/* 저녁 무렵엔 캐릭터에만 주황빛을 더 진하게 (말풍선은 제외) */
+#stage.dusk1 #flip{filter:sepia(.3) hue-rotate(-12deg) saturate(1.5) brightness(.98)}
+#stage.dusk2 #flip{filter:sepia(.45) hue-rotate(-24deg) saturate(1.8) brightness(.96)}
+#body{transform-origin:50% 100%;animation:breathe 4s ease-in-out infinite}
+#body.walk{animation:waddle .55s ease-in-out infinite}
+#body.run{animation:runhop .42s ease-in-out infinite}
+@keyframes runhop{0%,100%{transform:translateY(0) rotate(-3.5deg)}25%{transform:translateY(-5%) rotate(0)}50%{transform:translateY(0) rotate(3.5deg)}75%{transform:translateY(-5%) rotate(0)}}
+#body.happy{animation:jump .5s ease-out 3}
+#body.eat{animation:munch .35s ease-in-out 6}
+#stage.sleep #body{animation:breathe 6s ease-in-out infinite;filter:brightness(.9)}
+#char.singing #body{animation:sing 1.8s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes sing{0%,100%{transform:rotate(-2.5deg) translateY(0)}50%{transform:rotate(2.5deg) translateY(-1.5%)}}
+@keyframes talk{0%,100%{transform:scale(1)}50%{transform:translateY(-3%) scale(1.02,.98)}}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(.99,1.035)}}
+@keyframes waddle{0%,100%{transform:translateY(0) rotate(-3deg)}25%{transform:translateY(-4%) rotate(0)}50%{transform:translateY(0) rotate(3deg)}75%{transform:translateY(-4%) rotate(0)}}
+@keyframes jump{0%,100%{transform:translateY(0) scale(1.03,.97)}50%{transform:translateY(-14%) scale(.97,1.04)}}
+#body.ouch{animation:ouch .45s ease-out 1}
+#body.perk{animation:perk .5s ease-out 1}   /* 노크 소리에 깜짝 귀 쫑긋 */
+@keyframes perk{0%{transform:none}30%{transform:translateY(-6%) scale(.97,1.04)}60%{transform:translateY(0) scale(1.03,.96)}100%{transform:none}}
+@keyframes ouch{0%{transform:scale(1.05,.93)}20%{transform:translateX(-5%) rotate(-4deg)}45%{transform:translateX(5%) rotate(4deg)}70%{transform:translateX(-3%) rotate(-2deg)}100%{transform:none}}
+@keyframes munch{0%,100%{transform:scale(1)}50%{transform:scale(1.03,.97)}}
+#bubble{z-index:2;position:absolute;left:50%;bottom:100%;transform:translateX(-50%) scale(.8);margin-bottom:10px;background:#fff;border-radius:22px;padding:.5em .9em;font-size:calc(22px*var(--z));font-weight:700;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;box-shadow:0 2px 8px rgba(0,0,0,.15);pointer-events:none}
+#bubble.show{opacity:1;transform:translateX(-50%) scale(1)}
+#bubble:after{content:"";position:absolute;left:50%;top:100%;margin-left:-8px;border:8px solid transparent;border-top-color:#fff}
+.fx{position:absolute;left:50%;top:10%;font-size:30px;pointer-events:none;animation:float 1.2s ease-out forwards}
+@keyframes float{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-110px)}}
+/* 선풍기: 누르면 날개가 돌고, 켜진 동안 커튼이 더 크게 흔들려요 */
+#fan{position:absolute;left:615px;top:396px;width:109px;height:109px;z-index:1;cursor:pointer;border-radius:50%}
+#fanBlades{position:absolute;left:16px;top:16px;width:77px;height:77px;opacity:0;transition:opacity 1.6s;pointer-events:none}
+#fanBlades .bl{position:absolute;inset:0;background:var(--fanimg) center/100% 100% no-repeat;animation:fanspin .45s linear infinite;animation-play-state:paused;
+  -webkit-mask-image:radial-gradient(circle closest-side,transparent 0 24%,#000 34%,#000 82%,transparent 100%);mask-image:radial-gradient(circle closest-side,transparent 0 24%,#000 34%,#000 82%,transparent 100%)}
+#fanBlades .b2{opacity:.5;animation-delay:-.0375s}
+#stage{--fanimg:url(img/minigame/fan/fan-room1.webp)}
+#stage.pm{--fanimg:url(img/minigame/fan/fan-pm.webp)}
+#stage.set{--fanimg:url(img/minigame/fan/fan-sunset.webp)}
+#stage.eve{--fanimg:url(img/minigame/fan/fan-dusk.webp)}
+#stage.fan #fanBlades{opacity:.92;transition:opacity .8s}
+#stage.fan #fanBlades .bl{animation-play-state:running}
+@keyframes fanspin{to{transform:rotate(360deg)}}
+#stage.fan .curt .in{animation:sway2 var(--d2) ease-in-out infinite alternate}
+#stage.fan #cR .in{animation-direction:alternate-reverse;animation-delay:-2s}
+@keyframes sway2{0%{transform:skewX(-3deg) scaleX(.97)}50%{transform:skewX(2.2deg) scaleX(1.06)}100%{transform:skewX(-1deg) scaleX(1.01)}}
+/* 주방 (거실 왼쪽 끝으로 걸어가면 나와요) */
+#world3,#world4,#world5,#world6,#world7,#world8,#world9,#world10,#world11,#world12,#world13{position:absolute;left:0;top:0;transform-origin:0 0;display:none;will-change:transform}
+.bgi{position:absolute;inset:0;background-size:100% 100%;background-repeat:no-repeat;transition:filter 2.5s}
+#stage.set .bgi{filter:sepia(.18) saturate(1.1) brightness(.97)}
+#stage.eve .bgi{filter:sepia(.3) hue-rotate(-12deg) brightness(.85)}
+#stage.tw .bgi{filter:brightness(.7) saturate(.9) hue-rotate(10deg)}
+#stage.nt .bgi{filter:brightness(.5) saturate(.85) hue-rotate(15deg)}
+/* 밖 장면: 거실과 같은 시간대에 맞춰 그림이 바뀌어요 (13시 오후 / 17시 노을 / 18시~ 저녁·밤). 아래 그림은 켜 둬서 전환 때 깜빡이지 않아요 */
+.obg{position:absolute;inset:0;background-size:100% 100%;background-repeat:no-repeat;opacity:0;transition:opacity 2.5s,filter 2.5s;pointer-events:none}
+#stage.pm #obPm,#stage.set #obPm,#stage.eve #obPm,#stage.tw #obPm,#stage.nt #obPm{opacity:1}
+#stage.set #obSet,#stage.eve #obSet,#stage.tw #obSet,#stage.nt #obSet{opacity:1}
+#stage.eve #obEve,#stage.tw #obEve,#stage.nt #obEve{opacity:1}
+#stage.tw #obTw,#stage.nt #obTw{opacity:1}
+#stage.nt #obNt{opacity:1}
+/* 달밤 그림 한 장으로 밤 11시(별·달)와 12~5시(가장 어두운 밤)까지 쓰니까, 늦을수록 어둡게 해요 */
+#stage.n23 #obNt{filter:brightness(.82) saturate(.95)}
+#stage.mid #obNt{filter:brightness(.6) saturate(.9) hue-rotate(8deg)}
+/* 밖 왼쪽 길(숲길): 낚시터·돌계단 길과 같은 시간대에 그림이 바뀌어요 (낮 / 16시 오후 / 17시 노을 / 18시 저녁(20시 해질녘까지 유지) / 21시~ 달밤, 23시·0~5시는 달밤을 더 어둡게) */
+#world10 .bgi{filter:none!important}
+#world10>.bgi{transition:filter 2.5s,visibility 0s}
+#world10 .obg{transition:opacity 2.5s,filter 2.5s,visibility 0s}
+#stage.pm4 #wdPm,#stage.set #wdPm,#stage.eve #wdPm,#stage.tw #wdPm,#stage.nt #wdPm{opacity:1}
+#stage.set #wdSet,#stage.eve #wdSet,#stage.tw #wdSet,#stage.nt #wdSet{opacity:1}
+#stage.eve #wdEve,#stage.tw #wdEve,#stage.nt #wdEve{opacity:1}
+#stage.tw #wdEve{filter:brightness(.82) saturate(.95)}
+#stage.nt #wdNt{opacity:1}
+#stage.n23 #wdNt{filter:brightness(.82) saturate(.95)}
+#stage.mid #wdNt{filter:brightness(.6) saturate(.9) hue-rotate(8deg)}
+#stage.pm4 #world10>.bgi,
+#stage.set #world10>.bgi,#stage.set #wdPm,
+#stage.eve #world10>.bgi,#stage.eve #wdPm,#stage.eve #wdSet,
+#stage.tw #world10>.bgi,#stage.tw #wdPm,#stage.tw #wdSet,
+#stage.nt #world10>.bgi,#stage.nt #wdPm,#stage.nt #wdSet,#stage.nt #wdEve{visibility:hidden;transition:opacity 2.5s,filter 2.5s,visibility 0s 2.6s}
+/* 숲 끝 갈림길: 17시 노을 / 18시 저녁(20시 해질녘까지 유지, 조금 어둡게) / 21시~ 달밤, 23시·0~5시는 달밤을 더 어둡게 (낮 그림은 img/bg/forest-end.webp) */
+#world11 .bgi{filter:none!important}
+#world11>.bgi{transition:filter 2.5s,visibility 0s}
+#world11 .obg{transition:opacity 2.5s,filter 2.5s,visibility 0s}
+#stage.set #wnSet,#stage.eve #wnSet,#stage.tw #wnSet,#stage.nt #wnSet{opacity:1}
+#stage.eve #wnEve,#stage.tw #wnEve,#stage.nt #wnEve{opacity:1}
+#stage.tw #wnEve{filter:brightness(.82) saturate(.95)}
+#stage.nt #wnNt{opacity:1}
+#stage.n23 #wnNt{filter:brightness(.82) saturate(.95)}
+#stage.mid #wnNt{filter:brightness(.6) saturate(.9) hue-rotate(8deg)}
+#stage.set #world11>.bgi,
+#stage.eve #world11>.bgi,#stage.eve #wnSet,
+#stage.tw #world11>.bgi,#stage.tw #wnSet,
+#stage.nt #world11>.bgi,#stage.nt #wnSet,#stage.nt #wnEve{visibility:hidden;transition:opacity 2.5s,filter 2.5s,visibility 0s 2.6s}
+#fSign{transition:filter 2.5s}
+#stage.pm #fSign{filter:sepia(.08) saturate(1.05) brightness(.98)}
+#stage.pm4 #fSign{filter:sepia(.2) saturate(1.1) brightness(.95)}
+#stage.set #fSign{filter:sepia(.3) saturate(1.15) brightness(.95) hue-rotate(-8deg)}
+#stage.eve #fSign{filter:sepia(.3) hue-rotate(-12deg) brightness(.85)}
+#stage.tw #fSign{filter:brightness(.7) saturate(.9) hue-rotate(10deg)}
+#stage.nt #fSign{filter:brightness(.5) saturate(.85) hue-rotate(15deg)}
+#stage.n23 #fSign{filter:brightness(.42) saturate(.85) hue-rotate(15deg)}
+#stage.mid #fSign{filter:brightness(.3) saturate(.8) hue-rotate(18deg)}
+/* 하치와레 집 앞 정원: 시간대별 그림이 있어서 배경 필터는 끄고, 그림을 서서히 덮어 가며 바꿔요 (낮 그림은 img/bg/garden.webp) */
+#world7 .bgi{filter:none!important}
+/* 거실과 같은 시간에 바뀌어요: 17시 노을 / 18시 저녁(20시 황혼 때도 유지) / 21시 달밤 / 23시~5시 깊은 밤 */
+#stage.set #gSet,#stage.eve #gSet,#stage.tw #gSet,#stage.nt #gSet{opacity:1}
+#stage.eve #gEve,#stage.tw #gEve,#stage.nt #gEve{opacity:1}
+#stage.nt #gNt{opacity:1}
+#stage.n23 #gN2,#stage.mid #gN2{opacity:1}
+#stage.mid #gN2{filter:brightness(.85)}
+/* 바깥 표지판: 그림은 낮 그림 한 장(osign-sil / osign-face)만 쓰고, 시간대 색은 필터로 배경과 같이 2.5초 동안 서서히 바뀌어요 */
+#oSign{transition:filter 2.5s}
+#stage.pm #oSign{filter:sepia(.08) saturate(1.05) brightness(.98)}
+#stage.set #oSign{filter:sepia(.3) saturate(1.15) brightness(.95) hue-rotate(-8deg)}
+#stage.eve #oSign{filter:sepia(.3) hue-rotate(-12deg) brightness(.85)}
+#stage.tw #oSign{filter:brightness(.7) saturate(.9) hue-rotate(10deg)}
+#stage.nt #oSign{filter:brightness(.5) saturate(.85) hue-rotate(15deg)}
+#stage.n23 #oSign{filter:brightness(.42) saturate(.85) hue-rotate(15deg)}
+#stage.mid #oSign{filter:brightness(.3) saturate(.8) hue-rotate(18deg)}
+/* 정원 표지판도 같은 필터를 써서 배경과 같이 바뀌어요 */
+#gSign{transition:filter 2.5s}
+#stage.pm #gSign{filter:sepia(.08) saturate(1.05) brightness(.98)}
+#stage.set #gSign{filter:sepia(.3) saturate(1.15) brightness(.95) hue-rotate(-8deg)}
+#stage.eve #gSign{filter:sepia(.3) hue-rotate(-12deg) brightness(.85)}
+#stage.tw #gSign{filter:brightness(.7) saturate(.9) hue-rotate(10deg)}
+#stage.nt #gSign{filter:brightness(.5) saturate(.85) hue-rotate(15deg)}
+#stage.n23 #gSign{filter:brightness(.42) saturate(.85) hue-rotate(15deg)}
+#stage.mid #gSign{filter:brightness(.3) saturate(.8) hue-rotate(18deg)}
+.ffc{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+.ffly{position:absolute;left:0;top:0;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;opacity:0;pointer-events:none;will-change:transform,opacity;-webkit-tap-highlight-color:transparent;touch-action:manipulation;background:radial-gradient(circle,rgba(255,255,210,1) 0,rgba(235,255,140,.95) 8%,rgba(200,255,110,.6) 17%,rgba(170,255,90,.2) 34%,rgba(160,255,80,0) 52%)}
+.hot{position:absolute;z-index:3;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#tubView{position:absolute;inset:0;z-index:1500;display:none;opacity:0;transition:opacity .35s;background:#1c2a3a;cursor:pointer}
+#tubView.on{display:block}#tubView.show{opacity:1}
+#tubView .bgi{background-size:cover;background-position:center}
+#tubBg{background-image:url(img/minigame/wash/bathtub.webp)}
+@media (orientation:portrait){#tubBg{background-image:url(img/minigame/wash/bathtub-p.webp)}}
+#tubBack{position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 12px);border:0;border-radius:999px;padding:10px 18px;font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:rgba(255,250,240,.92);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+/* ---- 씻겨주기 (욕조 클로즈업) ---- */
+#washView{position:absolute;inset:0;z-index:1600;display:none;opacity:0;transition:opacity .35s;background:#1c2a3a;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#washView.on{display:block}#washView.show{opacity:1}
+#washBg{position:absolute;inset:0;background-size:cover;background-position:center;background-image:url(img/minigame/wash/bathtub.webp)}
+@media (orientation:portrait){#washBg{background-image:url(img/minigame/wash/bathtub-p.webp)}}
+#washPlay{position:absolute;inset:0;touch-action:none}
+#washBack{position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:5;border:0;border-radius:999px;padding:10px 18px;font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:rgba(255,250,240,.92);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+#washHint{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);z-index:5;max-width:calc(100% - 24px);padding:9px 14px;border-radius:999px;background:rgba(255,250,240,.94);box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:15px;font-weight:700;color:var(--ink);text-align:center;pointer-events:none;transition:opacity .25s}
+#wChar{position:absolute;pointer-events:none;z-index:2}
+#wClip{position:absolute;left:0;top:0;overflow:hidden}
+#wImg{position:absolute;left:0;top:0;display:block;animation:wBreath 3.2s ease-in-out infinite}
+@keyframes wBreath{0%,100%{transform:translateY(3px)}50%{transform:translateY(0)}}
+#wFoam{position:absolute;left:0;top:0;width:100%;height:100%}
+.wp{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);background:radial-gradient(circle at 36% 32%,#fff 0 30%,rgba(255,255,255,.96) 31% 62%,rgba(205,225,250,.9) 100%);box-shadow:0 0 4px rgba(150,185,235,.7),inset -2px -3px 5px rgba(170,200,240,.55);animation:wPop .22s ease-out}
+.wp.out{transition:opacity .35s,transform .35s;opacity:0;transform:translate(-50%,-30%) scale(.5)}
+@keyframes wPop{from{transform:translate(-50%,-50%) scale(.2)}to{transform:translate(-50%,-50%) scale(1)}}
+#wWater{position:absolute;left:-10%;right:-10%;bottom:-9%;height:26%;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,rgba(185,228,240,.88) 0,rgba(185,228,240,.7) 45%,rgba(185,228,240,0) 72%);animation:wRip 3s ease-in-out infinite}
+@keyframes wRip{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.05)}}
+#wBubbles{position:absolute;inset:0;pointer-events:none;z-index:3}
+.wb{position:absolute;background-image:url(img/minigame/wash/wash-bubbles.webp);background-repeat:no-repeat;pointer-events:none;animation:wFloat var(--d,1.5s) ease-out forwards}
+@keyframes wFloat{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}15%{opacity:.95}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% - var(--dy,90px))) scale(1)}}
+#wBub{position:absolute;z-index:4;transform:translate(-50%,-100%);background:#fff;border-radius:20px;padding:.45em .85em;font-size:18px;font-weight:700;color:var(--ink);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:0;transition:opacity .2s;pointer-events:none}
+#wBub.on{opacity:1}
+#wTool{position:absolute;z-index:4;display:none;pointer-events:none;transform-origin:0 0}
+#wTool.on{display:block}
+#wTool.foamy::after{content:"";position:absolute;left:12%;top:12%;width:76%;height:76%;background:radial-gradient(circle at 30% 55%,#fff 0 17%,transparent 18%),radial-gradient(circle at 62% 38%,#fff 0 20%,transparent 21%),radial-gradient(circle at 56% 72%,#fff 0 16%,transparent 17%),radial-gradient(circle at 40% 30%,#fff 0 12%,transparent 13%);filter:drop-shadow(0 0 3px rgba(150,185,235,.9))}
+#wTray{position:absolute;z-index:5;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);display:flex;gap:10px;padding:8px 12px;border-radius:26px;background:rgba(255,250,240,.93);box-shadow:0 3px 12px rgba(0,0,0,.25)}
+#wTray button{position:relative;width:70px;height:84px;border:3px solid transparent;border-radius:18px;background:rgba(255,255,255,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;font-size:11px;font-weight:700;color:var(--ink);cursor:pointer;padding:2px}
+#wTray button img{max-width:56px;max-height:54px;object-fit:contain;pointer-events:none}
+#wTray button.sel{border-color:#7aa5ee;background:#eaf2ff}
+#wTray button.bump img{animation:wBump .35s}
+@keyframes wBump{0%{transform:scale(1)}40%{transform:scale(.82) translateY(4px)}100%{transform:scale(1)}}
+@media (orientation:landscape) and (max-height:520px){#wTray button{width:58px;height:62px}#wTray button img{max-height:36px}#washHint{top:calc(env(safe-area-inset-top,0px) + 12px);font-size:13px}}
+#world2{position:absolute;left:0;top:0;transform-origin:0 0;display:none;will-change:transform}
+#kbg{position:absolute;inset:0;background:url(img/bg/kitchen-room2.webp) 0 0/100% 100% no-repeat;transition:filter 2.5s;filter:none}
+#kbgSet{position:absolute;inset:0;opacity:0;background:url(img/bg/kitchen-sunset.webp) 0 0/100% 100% no-repeat;transition:opacity 2.5s;pointer-events:none}
+#stage.set #kbgSet{opacity:1}
+#kbgEve{position:absolute;inset:0;opacity:0;background:url(img/bg/kitchen-dusk.webp) 0 0/100% 100% no-repeat;transition:opacity 2.5s;pointer-events:none}
+#stage.eve #kbgEve{opacity:1}
+#kbgTw{position:absolute;inset:0;opacity:0;background:url(img/bg/kitchen-twilight.webp) 0 0/100% 100% no-repeat;transition:opacity 2.5s;pointer-events:none}
+#stage.tw #kbgTw,#stage.nt #kbgTw{opacity:1}
+#kbgNt{position:absolute;inset:0;opacity:0;background:url(img/bg/kitchen-night.webp) 0 0/100% 100% no-repeat;transition:opacity 2.5s;pointer-events:none}
+#stage.nt #kbgNt{opacity:1}
+#stage.tw #kbgEve,#stage.nt #kbgEve{opacity:1}   /* 새 그림이 위로 덮이는 동안 아래 그림을 남겨 둬서 전환 때 깜빡이지 않게 */
+#ktint{position:absolute;inset:0;pointer-events:none;z-index:2;background:rgba(30,40,110,0);transition:background 2.5s}
+#kbgMid{position:absolute;inset:0;opacity:0;background:url(img/bg/kitchen-midnight.webp) 0 0/100% 100% no-repeat;transition:opacity 2.5s;pointer-events:none}
+#stage.mid #kbgMid{opacity:1}
+#stage.mid #ktint{background:rgba(15,25,90,0)}
+#sbShade{position:absolute;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 56px);background:linear-gradient(rgba(10,6,3,.62),rgba(10,6,3,0));pointer-events:none;z-index:998}
+#fade{position:absolute;inset:0;background:#2a1f16;opacity:0;pointer-events:none;transition:opacity .4s ease-in-out;z-index:900}
+#fade.on{opacity:1;pointer-events:auto}
+.foot{display:flex;align-items:center;gap:8px;padding:8px 18px 8px 14px;font-size:calc(22px*var(--z))}.foot b{font-size:1.6em;line-height:1;font-weight:400}
+#lakeBack{display:none;left:calc(env(safe-area-inset-left,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 98px);width:44px;height:44px;padding:0;border:0;border-radius:50%;font-size:22px;line-height:1;align-items:center;justify-content:center;background:rgba(255,250,240,.9);box-shadow:0 2px 8px rgba(91,70,54,.25);cursor:pointer;-webkit-tap-highlight-color:transparent}
+#lakeBack.on{display:flex}
+#outBtn,#homeBtn{display:none;right:calc(env(safe-area-inset-right,0px) + 12px);top:calc(env(safe-area-inset-top,0px) + 58px);width:44px;height:44px;padding:0;border:0;border-radius:50%;font-size:22px;line-height:1;align-items:center;justify-content:center;background:rgba(255,250,240,.9);box-shadow:0 2px 8px rgba(91,70,54,.25);cursor:pointer;-webkit-tap-highlight-color:transparent}
+#outBtn.on,#homeBtn.on{display:flex}
+@media (orientation:landscape) and (max-height:520px){#outBtn,#homeBtn{top:calc(env(safe-area-inset-top,0px) + 50px);width:38px;height:38px;font-size:19px}}
+@media (orientation:landscape) and (max-height:520px){#lakeBack{bottom:calc(env(safe-area-inset-bottom,0px) + 62px);width:38px;height:38px;font-size:19px}}
+.door{position:absolute;transform:translate(-50%,-100%);border:0;border-radius:999px;padding:10px 18px;font:inherit;font-size:calc(20px*var(--z));font-weight:700;color:var(--ink);background:rgba(255,250,240,.9);box-shadow:0 2px 8px rgba(91,70,54,.25);cursor:pointer;z-index:500;white-space:nowrap;animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-6px}}
+@media (prefers-reduced-motion:reduce){#body,#body.walk{animation-duration:8s}.curt .in,#stage.fan .curt .in{animation:none}#fanBlades .bl{animation:none}}
+/* 아이패드(큰 화면): UI 조금 크게 / 가로모드 폰: 메뉴 낮게 */
+@media (min-width:700px) and (min-height:700px){#top{font-size:17px}#menu{width:min(calc(100% - 24px),600px)}#menu button{font-size:16px;padding:12px 0 10px}#menu button b{font-size:30px}}
+@media (orientation:landscape) and (max-height:520px){#top{font-size:12px;top:calc(env(safe-area-inset-top,0px) + 6px)}#menu{width:min(calc(100% - 24px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)),420px);bottom:calc(env(safe-area-inset-bottom,0px) + 6px);padding:5px;gap:6px}#menu button{padding:5px 0 4px;font-size:11px;gap:1px}#menu button b{font-size:19px}}
+/* 하치와레 빼꼼: 부엌 현관문 틈(문짝 가장자리~우산꽂이 앞)에서 슥 나와요. 틈 밖은 잘려서 문짝 뒤에 숨은 것처럼 보여요 */
+#hPeek{position:absolute;left:274px;top:300px;width:88px;height:410px;overflow:hidden;pointer-events:none;z-index:3;display:none}
+#hPeek.on{display:block}
+#hPeek .hp{position:absolute;left:0;bottom:10px;width:92px;transform:translateX(-125%) rotate(-6deg);transform-origin:50% 100%;transition:transform .6s cubic-bezier(.2,1.25,.4,1)}
+#hPeek.in .hp{transform:translateX(-20%) rotate(-7deg)}
+#hPeek.look .hp{transform:translateX(-12%) rotate(3deg)}
+#hPeek img{display:block;width:100%;height:auto;transform-origin:50% 100%}
+#hPeek.in img{animation:hWig 1.7s ease-in-out infinite}
+@keyframes hWig{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(2.5deg) translateY(-2px)}}
+#hSay{position:absolute;left:340px;top:566px;transform:translate(-50%,-100%) scale(.8);z-index:4;background:#fff;border-radius:18px;padding:.4em .8em;font-size:calc(18px*var(--z));font-weight:700;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;box-shadow:0 2px 8px rgba(0,0,0,.15);pointer-events:none}
+#hSay.show{opacity:1;transform:translate(-50%,-100%) scale(1)}
+#hSay:after{content:"";position:absolute;left:50%;top:100%;margin-left:-7px;border:7px solid transparent;border-top-color:#fff}
+/* 놀러 온 하치와레: 치이카와처럼 방 안을 돌아다녀요 (말풍선·깜빡임 없는 한 장짜리 그림) */
+#hc{position:absolute;left:0;top:0;transform:translate(-50%,-100%);will-change:transform;display:none}
+#hc.on{display:block}
+#hc img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
+#hbody{position:relative}
+#hc img.f{position:absolute;left:0;top:0;visibility:hidden}
+#hc img.f.oc{position:static;visibility:visible}
+#hc.mouth img.oc,#hc.blink img.oc{visibility:hidden}
+#hc.mouth:not(.blink) img.oo{visibility:visible}
+#hc.blink:not(.mouth) img.cc{visibility:visible}
+#hc.mouth.blink img.co{visibility:visible}
+#hc.singing #hbody{animation:sing 1.8s ease-in-out infinite;transform-origin:50% 100%}
+#hc.talking img{animation:talk .34s ease-in-out infinite;transform-origin:50% 100%}
+#hflip{transition:transform .25s,filter 2.5s;filter:none}
+#stage.tw #hflip{filter:sepia(0) hue-rotate(0deg) saturate(1.05) brightness(.86)}
+#stage.nt #hflip{filter:sepia(0) hue-rotate(0deg) saturate(1.05) brightness(.78)}
+#stage.dusk1 #hflip{filter:sepia(.3) hue-rotate(-12deg) saturate(1.5) brightness(.98)}
+#stage.dusk2 #hflip{filter:sepia(.45) hue-rotate(-24deg) saturate(1.8) brightness(.96)}
+#hbody{transform-origin:50% 100%;animation:breathe 4.4s ease-in-out infinite}
+#hbody.walk{animation:waddle .55s ease-in-out infinite}
+#hbody.eat{animation:munch .35s ease-in-out 6}
+#hbody.happy{animation:jump .5s ease-out 3}
+#hbody.perk{animation:perk .5s ease-out 1}
+#hbub{z-index:2;position:absolute;left:50%;bottom:100%;transform:translateX(-50%) scale(.8);margin-bottom:10px;background:#fff;border-radius:22px;padding:.5em .9em;font-size:calc(20px*var(--z));font-weight:700;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;box-shadow:0 2px 8px rgba(0,0,0,.15);pointer-events:none}
+#hbub.show{opacity:1;transform:translateX(-50%) scale(1)}
+#hbub:after{content:"";position:absolute;left:50%;top:100%;margin-left:-8px;border:8px solid transparent;border-top-color:#fff}
+/* 놀러 온 우사기: 하치와레처럼 방 안을 돌아다녀요 */
+#uc{position:absolute;left:0;top:0;transform:translate(-50%,-100%);will-change:transform;display:none}
+#uc.on{display:block}
+#uc img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
+#uc img.f{position:absolute;left:0;top:0;visibility:hidden}
+#uc img.f.oc{position:static;visibility:visible}
+#uc.mouth img.oc{visibility:hidden}
+#uc.mouth img.oo{visibility:visible}
+#uflip{transition:transform .25s,filter 2.5s;filter:none}
+#stage.tw #uflip{filter:sepia(0) hue-rotate(0deg) saturate(1.05) brightness(.86)}
+#stage.nt #uflip{filter:sepia(0) hue-rotate(0deg) saturate(1.05) brightness(.78)}
+#stage.dusk1 #uflip{filter:sepia(.3) hue-rotate(-12deg) saturate(1.5) brightness(.98)}
+#stage.dusk2 #uflip{filter:sepia(.45) hue-rotate(-24deg) saturate(1.8) brightness(.96)}
+#ubody{position:relative;transform-origin:50% 100%;animation:breathe 4.4s ease-in-out infinite}
+#ubody.walk{animation:waddle .55s ease-in-out infinite}
+#ubody.happy{animation:jump .5s ease-out 3}
+#ubody.perk{animation:perk .5s ease-out 1}
+#ubody.eat{animation:munch .35s ease-in-out 6}
+#hc.zz #hflip,#uc.zz #uflip{filter:brightness(.8)}
+#uc.talking img{animation:talk .34s ease-in-out infinite;transform-origin:50% 100%}
+#ubub{z-index:2;position:absolute;left:50%;bottom:100%;transform:translateX(-50%) scale(.8);margin-bottom:10px;background:#fff;border-radius:22px;padding:.5em .9em;font-size:calc(20px*var(--z));font-weight:700;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;box-shadow:0 2px 8px rgba(0,0,0,.15);pointer-events:none}
+#ubub.show{opacity:1;transform:translateX(-50%) scale(1)}
+#ubub:after{content:"";position:absolute;left:50%;top:100%;margin-left:-8px;border:8px solid transparent;border-top-color:#fff}
+/* 시작 화면: 터치해서 시작 (소리를 켜기 위해 필요) */
+#startScreen{position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#f3e6c8;cursor:pointer;transition:opacity .6s ease;touch-action:manipulation}
+#startScreen .ssInst{position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--ink);opacity:.85}
+#startScreen .ssInst .q{font-weight:700}
+#startScreen .ssInst .bt{display:flex;gap:8px}
+#startScreen .ssInst button{font:inherit;font-size:12px;font-weight:700;color:var(--ink);background:rgba(255,250,240,.9);border:1px solid rgba(91,70,54,.25);border-radius:999px;padding:5px 14px;cursor:pointer;touch-action:manipulation}
+#startScreen .ssInst button:active{transform:scale(.95)}
+#startScreen .ssGuide{position:absolute;left:50%;bottom:calc(74px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(82vw,300px);background:rgba(255,250,240,.97);color:var(--ink);border-radius:14px;padding:11px 14px;font-size:13px;line-height:1.5;text-align:center;box-shadow:0 4px 16px rgba(91,70,54,.25);display:none}
+#startScreen .ssGuide.on{display:block}
+#startScreen.hide{opacity:0;pointer-events:none}
+#startScreen img{width:min(46vw,220px);height:auto;animation:ssBob 1.8s ease-in-out infinite;pointer-events:none}
+#startScreen .ssT{font-size:22px;font-weight:700;color:var(--ink);pointer-events:none}
+#startScreen .ssB{font-size:17px;font-weight:700;color:var(--ink);background:rgba(255,250,240,.92);border-radius:999px;padding:12px 26px;box-shadow:0 4px 14px rgba(91,70,54,.18);animation:ssPulse 1.6s ease-in-out infinite;pointer-events:none}
+@keyframes ssBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes ssPulse{0%,100%{opacity:1}50%{opacity:.55}}
+/* [성능] 위에 완전히 덮인 아래쪽 배경 그림은 전환(2.5초)이 끝난 뒤 그리지 않게 해서, 밖/정원이 밤일 때 전체화면 그림 5~6장을 매 프레임 겹쳐 그리던 부담을 줄여요. 보이는 모습은 똑같아요 */
+#world3>.bgi,#world7>.bgi{transition:filter 2.5s,visibility 0s}
+#world3 .obg,#world7 .obg{transition:opacity 2.5s,filter 2.5s,visibility 0s}
+#stage.pm #world3>.bgi,
+#stage.set #world3>.bgi,#stage.set #obPm,
+#stage.eve #world3>.bgi,#stage.eve #obPm,#stage.eve #obSet,
+#stage.tw #world3>.bgi,#stage.tw #obPm,#stage.tw #obSet,#stage.tw #obEve,
+#stage.nt #world3>.bgi,#stage.nt #obPm,#stage.nt #obSet,#stage.nt #obEve,#stage.nt #obTw,
+#stage.set #world7>.bgi,
+#stage.eve #world7>.bgi,#stage.eve #gSet,
+#stage.tw #world7>.bgi,#stage.tw #gSet,
+#stage.nt #world7>.bgi,#stage.nt #gSet,#stage.nt #gEve,
+#stage.n23 #gNt,#stage.mid #gNt,#stage.n23 #gEve,#stage.mid #gEve,#stage.n23 #gSet,#stage.mid #gSet,#stage.n23 #world7>.bgi,#stage.mid #world7>.bgi{visibility:hidden;transition:opacity 2.5s,filter 2.5s,visibility 0s 2.6s}
+/* 오른쪽 길 첫 장면(돌계단 길): 밖 장면과 같은 시간대에 그림이 바뀌어요 (16시 오후 황금빛 / 17시 노을 / 18시 저녁 / 20시 해질녘 / 21시~ 밤, 23시·0~5시는 밤 그림을 더 어둡게) */
+#world8>.bgi{transition:filter 2.5s,visibility 0s}
+#world8 .obg{transition:opacity 2.5s,filter 2.5s,visibility 0s}
+#stage.pm4 #cvPm,#stage.set #cvPm,#stage.eve #cvPm,#stage.tw #cvPm,#stage.nt #cvPm{opacity:1}
+#stage.set #cvSet,#stage.eve #cvSet,#stage.tw #cvSet,#stage.nt #cvSet{opacity:1}
+#stage.eve #cvEve,#stage.tw #cvEve,#stage.nt #cvEve{opacity:1}
+#stage.tw #cvTw,#stage.nt #cvTw{opacity:1}
+#stage.nt #cvNt{opacity:1}
+#stage.n23 #cvNt{filter:brightness(.82) saturate(.95)}
+#stage.mid #cvNt{filter:brightness(.6) saturate(.9) hue-rotate(8deg)}
+#stage.pm4 #world8>.bgi,
+#stage.set #world8>.bgi,#stage.set #cvPm,
+#stage.eve #world8>.bgi,#stage.eve #cvPm,#stage.eve #cvSet,
+#stage.tw #world8>.bgi,#stage.tw #cvPm,#stage.tw #cvSet,#stage.tw #cvEve,
+#stage.nt #world8>.bgi,#stage.nt #cvPm,#stage.nt #cvSet,#stage.nt #cvEve,#stage.nt #cvTw{visibility:hidden;transition:opacity 2.5s,filter 2.5s,visibility 0s 2.6s}
+/* 오른쪽 길 끝 낚시터: 돌계단 길과 같은 시간대에 그림이 바뀌어요 (16시 오후 / 17시 노을 / 18시 저녁 / 20시 해질녘 / 21시~ 달밤, 23시·0~5시는 달밤 그림을 더 어둡게) */
+#world9>.bgi{transition:filter 2.5s,visibility 0s}
+#world9 .obg{transition:opacity 2.5s,filter 2.5s,visibility 0s}
+#stage.pm4 #cnPm,#stage.set #cnPm,#stage.eve #cnPm,#stage.tw #cnPm,#stage.nt #cnPm{opacity:1}
+#stage.set #cnSet,#stage.eve #cnSet,#stage.tw #cnSet,#stage.nt #cnSet{opacity:1}
+#stage.eve #cnEve,#stage.tw #cnEve,#stage.nt #cnEve{opacity:1}
+#stage.tw #cnTw,#stage.nt #cnTw{opacity:1}
+#stage.nt #cnNt{opacity:1}
+#stage.n23 #cnNt{filter:brightness(.82) saturate(.95)}
+#stage.mid #cnNt{filter:brightness(.6) saturate(.9) hue-rotate(8deg)}
+#stage.pm4 #world9>.bgi,
+#stage.set #world9>.bgi,#stage.set #cnPm,
+#stage.eve #world9>.bgi,#stage.eve #cnPm,#stage.eve #cnSet,
+#stage.tw #world9>.bgi,#stage.tw #cnPm,#stage.tw #cnSet,#stage.tw #cnEve,
+#stage.nt #world9>.bgi,#stage.nt #cnPm,#stage.nt #cnSet,#stage.nt #cnEve,#stage.nt #cnTw{visibility:hidden;transition:opacity 2.5s,filter 2.5s,visibility 0s 2.6s}
+
+/* ---- 첫 낚시 연출 / 도감 ---- */
+#stage.fev .ui,#stage.fev .door{pointer-events:none}
+#stage.fev #castBtn{visibility:hidden}
+#fPose,#fLine,#fFloat,#fBub{position:absolute;display:none;pointer-events:none}
+#fPose{z-index:7;left:496px;top:319px;width:314px;height:271px;transform-origin:224px 246px}
+#fPose.on{display:block;animation:fpop .35s ease-out both}
+#fPose.heavy{animation:fheavy .46s ease-in-out infinite}
+@keyframes fpop{from{opacity:0;transform:scale(.7) translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fheavy{0%,100%{transform:rotate(-2.6deg)}50%{transform:rotate(2deg) translateX(3px)}}
+#fLine{z-index:6;left:526px;top:515px;width:2px;height:185px;border-radius:2px;background:linear-gradient(#ff8fb8,#ffd0e2);transform-origin:50% 0}
+#fLine.on{display:block;animation:fline .5s ease-out both}
+#fLine.pull{height:206px;transition:height .3s}
+@keyframes fline{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+#fFloat{z-index:6;left:527px;top:700px;width:0;height:0}
+#fFloat.on{display:block}
+#fFloat .fb{position:absolute;left:-12px;top:-15px;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 22%,#ffd3e3 23% 58%,#ff7aa8 60%);box-shadow:0 2px 4px rgba(0,60,90,.35)}
+#fFloat .r{position:absolute;left:-34px;top:-9px;width:68px;height:22px;border:3px solid rgba(255,255,255,.8);border-radius:50%;opacity:0}
+#fFloat.drop .fb{animation:fdrop .55s .42s cubic-bezier(.3,1.4,.6,1) both}
+#fFloat.drop .r{animation:frip 1.4s .5s ease-out 2}
+#fFloat.drop .r+.r{animation-delay:.9s}
+#fFloat.nib .fb{animation:fnib .5s ease-in-out 3}
+#fFloat.nib .r{animation:frip 1.1s ease-out infinite}
+#fFloat.pull .fb{animation:fpull .22s ease-in-out infinite;top:-1px}
+#fFloat.pull .r{animation:frip .8s ease-out infinite}
+@keyframes fdrop{from{opacity:0;transform:translateY(-170px) scale(.6)}to{opacity:1;transform:none}}
+@keyframes fnib{0%,100%{transform:none}40%{transform:translateY(10px)}}
+@keyframes fpull{0%,100%{transform:translateX(-2px)}50%{transform:translateX(3px)}}
+@keyframes frip{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.25)}}
+#fBub{z-index:8;left:720px;top:300px;transform:translate(-50%,-100%) scale(.8);background:#fff;border-radius:22px;padding:.5em .9em;font-size:calc(22px*var(--z));font-weight:700;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+#fBub.show{display:block;opacity:1;transform:translate(-50%,-100%) scale(1)}
+#fBub:after{content:"";position:absolute;left:50%;top:100%;margin-left:-8px;border:8px solid transparent;border-top-color:#fff}
+#fishGet,#bookView{position:absolute;inset:0;z-index:1600;display:none;opacity:0;transition:opacity .8s;overflow:hidden;background:#1d9bc9}
+#fishGet.on,#bookView.on{display:block}#fishGet.show,#bookView.show{opacity:1}
+#fishGet .fgBlur{position:absolute;inset:-6%;background:url(img/minigame/fishing/fish-get.webp) center/cover;filter:blur(16px) saturate(1.1)}
+#fishGet .fgImg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;animation:fgbob 3.2s ease-in-out infinite}
+@keyframes fgbob{0%,100%{transform:translateY(-1.2%) rotate(-.4deg)}50%{transform:translateY(1.2%) rotate(.4deg)}}
+#fishGet .fgFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#fishGet.show .fgFlash{animation:fgfl 1.1s .2s ease-out both}
+@keyframes fgfl{0%{opacity:.95}100%{opacity:0}}
+#fgText{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 17%);text-align:center;font-size:clamp(22px,6.4vw,34px);font-weight:800;color:#fff;text-shadow:0 2px 0 #1b78a8,0 0 10px rgba(10,80,120,.7);min-height:1.4em;padding:0 12px}
+#fgRewards{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 14px);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;transform:translateY(-8px);transition:opacity .5s,transform .5s}
+#fgRewards.on{opacity:1;transform:none}
+#fgRewards .fgPill{display:flex;align-items:center;gap:6px;background:rgba(255,250,240,.94);color:var(--ink);border-radius:999px;padding:.4em 1em;font-size:15px;font-weight:800;box-shadow:0 2px 8px rgba(0,60,90,.3)}
+#fgRewards .fgPill img{height:26px;width:auto}
+#fgHint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 7%);text-align:center;color:#fff;font-size:14px;font-weight:700;text-shadow:0 1px 4px rgba(10,80,120,.8);opacity:0;transition:opacity .5s}
+#fgHint.on{opacity:1;animation:fgblink 1.6s ease-in-out infinite}
+@keyframes fgblink{0%,100%{opacity:1}50%{opacity:.35}}
+#bookBtn{display:none;right:calc(env(safe-area-inset-right,0px) + 14px);top:calc(env(safe-area-inset-top,0px) + 58px);width:42px;height:57px;padding:0;border:0;background:transparent;cursor:pointer;filter:drop-shadow(0 2px 5px rgba(20,60,90,.5));transition:transform .12s}
+#bookBtn img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+#bookBtn.on{display:block}
+#homeBtn.on+#bookBtn,#outBtn.on~#bookBtn{top:calc(env(safe-area-inset-top,0px) + 112px)}
+#bookBtn:active{transform:scale(.92)}
+#bookBtn.pop{animation:bkpop .8s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes bkpop{0%{transform:scale(0) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
+@media (orientation:landscape) and (max-height:520px){#bookBtn{top:calc(env(safe-area-inset-top,0px) + 50px);width:34px;height:46px}#homeBtn.on+#bookBtn,#outBtn.on~#bookBtn{top:calc(env(safe-area-inset-top,0px) + 96px)}}
+#bookView{transition:opacity .4s;background:url(img/minigame/dex/book-bg.webp) center/cover no-repeat,#6b5d4a;display:none;flex-direction:column}
+#bookView.on{display:flex}
+#bkWrap{flex:1;position:relative;min-height:0}
+#bkStage{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(var(--bkdx,0px),var(--bkdy,0px)) scale(var(--bkz,1));transition:transform .35s ease}
+#bkWrap.zm{overflow:hidden}
+#bkStage img{position:absolute;display:block;pointer-events:none;-webkit-user-drag:none}
+#bkCover{transform-origin:0 50%;transform:scale(.78);opacity:0;transition:transform .7s cubic-bezier(.3,1.4,.5,1),opacity .35s}
+#bkCover.in{opacity:1;transform:scale(1)}
+#bkCover.open{transform:perspective(1400px) rotateY(-105deg);opacity:0;transition:transform .8s ease-in,opacity .8s ease-in}
+#bkOpen{opacity:0;transform:scale(.93);transition:opacity .7s,transform .7s}
+#bkOpen.in{opacity:1;transform:none}
+#bkOpen.rdy{transition:opacity .14s,transform .3s}
+#bkOpen.hide{opacity:0}
+.bkf{opacity:0}
+#bkBar{display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 12px calc(env(safe-area-inset-bottom,0px) + 14px);opacity:0;transition:opacity .5s}
+#bkBar.on{opacity:1}
+#bkBar button{width:46px;height:46px;border:0;border-radius:50%;font-size:20px;font-weight:800;color:var(--ink);background:rgba(255,250,240,.92);box-shadow:0 2px 8px rgba(0,40,70,.35);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s,opacity .2s}
+#bkBar button:active{transform:scale(.92)}
+#bkBar button[disabled]{opacity:.35}
+#bkPage{min-width:64px;text-align:center;color:#fff;font-weight:800;font-size:16px;text-shadow:0 1px 4px rgba(0,40,70,.7)}
+#bkClose{position:absolute;right:calc(env(safe-area-inset-right,0px) + 14px);top:calc(env(safe-area-inset-top,0px) + 14px);width:44px;height:44px;border:0;border-radius:50%;font-size:20px;font-weight:800;color:var(--ink);background:rgba(255,250,240,.92);box-shadow:0 2px 8px rgba(0,40,70,.35);cursor:pointer;z-index:3;opacity:0;transition:opacity .5s}
+#bkClose.on{opacity:1}
+#bkRot{display:none;position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 24px);text-align:center;color:rgba(255,255,255,.85);font-size:13px;font-weight:700;text-shadow:0 1px 4px rgba(0,40,70,.7);pointer-events:none}
+@media (orientation:portrait){#bkRot.on{display:block}}
+
+
+.ii{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+#ckTray button b{width:38px;height:38px;display:block}#ckSlots span .ii{width:42px;height:42px}
+.gspot .ii{width:44px;height:44px}.gspot.rare{background:radial-gradient(circle,rgba(255,255,255,.95) 0 20%,rgba(200,180,255,.7) 46%,rgba(200,180,255,0) 74%)}
+.gspot{z-index:1;width:64px;height:64px;transform:translate(-50%,-50%);border:0;border-radius:50%;padding:0;font-size:28px;display:flex;align-items:center;justify-content:center;pointer-events:auto;background:radial-gradient(circle,rgba(255,255,215,.95) 0 22%,rgba(255,244,160,.55) 48%,rgba(255,244,160,0) 72%);animation:gtw 1.8s ease-in-out infinite}
+@keyframes gtw{50%{transform:translate(-50%,-50%) scale(1.18);filter:brightness(1.15)}}
+.gspot.pick{animation:none;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.35);transition:left .5s ease-in,top .5s ease-in,opacity .5s,transform .5s}
+#ckV{position:absolute;inset:0;z-index:1700;display:none;opacity:0;transition:opacity .45s;background:#2a1f16;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+#ckV.on{display:block}#ckV.show{opacity:1}
+.ckBg{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity .8s}
+#ckB1{background-image:url(img/bg/cook-start.webp),linear-gradient(#f3dfb8,#d5a974 70%,#a97c4f)}
+@media (orientation:landscape){#ckB1{background-image:url(img/bg/cook-start-wide.webp),linear-gradient(#f3dfb8,#d5a974 70%,#a97c4f);background-position:center 70%}}
+#ckB2{background-image:url(cook-stove.webp),linear-gradient(#5a4636,#3a2c22 60%,#241a14);opacity:0}
+#ckV[data-s=stove] #ckB2{opacity:1}
+#ckChi{position:absolute;left:50%;top:50%;width:min(46vw,250px);clip-path:inset(0 0 14% 0);opacity:0;transition:opacity .5s;pointer-events:none}
+#ckV.chi #ckChi{opacity:1}
+#ckSay{position:absolute;left:50%;top:22%;transform:translateX(-50%);max-width:84%;background:rgba(255,250,240,.95);color:var(--ink);border-radius:18px;padding:.6em 1.1em;font-size:18px;font-weight:800;text-align:center;opacity:0;transition:opacity .3s;box-shadow:0 2px 8px rgba(60,40,20,.3)}
+#ckSay.on{opacity:1}
+#ckPickBox{position:absolute;left:0;right:0;bottom:0;padding:12px 12px calc(env(safe-area-inset-bottom,0px) + 14px);display:none;flex-direction:column;align-items:center;gap:10px;background:linear-gradient(transparent,rgba(60,40,20,.55))}
+#ckV.pick #ckPickBox{display:flex}
+#ckSlots{display:flex;gap:10px}#ckSlots span{width:54px;height:54px;border-radius:16px;background:rgba(255,250,240,.9);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer}
+#ckTray{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+#ckTray button,#ckGo,#ckStop,#ckBack,#ckDex{border:0;font:inherit;font-weight:800;color:var(--ink);background:rgba(255,250,240,.92);border-radius:16px;padding:6px 8px;cursor:pointer;box-shadow:0 2px 8px rgba(60,40,20,.3)}
+#ckTray button{width:66px;display:flex;flex-direction:column;align-items:center;font-size:11px}#ckTray button b{font-size:26px}#ckTray button:disabled{opacity:.35}
+#ckGo,#ckStop{padding:10px 26px;font-size:17px;background:#ffd6dc}#ckGo:disabled{opacity:.4}
+#ckBack,#ckDex{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);border-radius:999px;padding:9px 16px;font-size:15px}
+#ckBack{left:12px}#ckDex{right:12px}
+#ckStoveBox{position:absolute;left:0;right:0;bottom:12%;display:none;flex-direction:column;align-items:center;gap:14px}
+#ckV[data-s=stove] #ckStoveBox{display:flex}
+#ckPot{font-size:92px;line-height:1;cursor:pointer;transition:transform .12s}#ckPot.stir{animation:ckst .35s}
+@keyframes ckst{30%{transform:rotate(-9deg) scale(1.06)}70%{transform:rotate(9deg) scale(1.06)}}
+#ckGauge{position:relative;width:min(70vw,300px);height:18px;border-radius:9px;background:linear-gradient(90deg,#ff8a80 0 38%,#8fd48f 38% 62%,#ff8a80 62%);box-shadow:0 0 0 3px rgba(255,250,240,.9)}
+#ckMk{position:absolute;top:-5px;width:6px;height:28px;margin-left:-3px;border-radius:3px;background:#3b2a1d}
+#ckRes{position:absolute;left:0;right:0;top:34%;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;transition:opacity .4s;pointer-events:none}#ckRes.on{opacity:1}
+#ckRes .p{background:rgba(255,250,240,.95);color:var(--ink);border-radius:999px;padding:.35em 1em;font-size:15px;font-weight:800}
+#ckRes .d{font-size:70px;line-height:1}
+#ckDexBox{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:rgba(40,28,18,.7)}#ckDexBox.on{display:flex}
+#ckDexBox .in{background:rgba(255,250,240,.97);border-radius:22px;padding:18px;width:min(86vw,360px);color:var(--ink)}
+#ckDexBox .g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;text-align:center;font-size:12px;font-weight:700}#ckDexBox .g b{display:block;font-size:34px}
+#ckDexBox .g .no b{filter:brightness(0);opacity:.25}
+#cookBtn{left:1250px;top:510px}
+#bkFish{position:absolute;opacity:0;transition:opacity .35s;pointer-events:none}
+#bkFish.on{opacity:1}
+#bkFish .f{position:absolute;transform:translate(-50%,-50%);width:13.4%;height:11.6%;display:flex;align-items:center;justify-content:center}
+#bkFish .f img{max-width:100%;max-height:100%;filter:drop-shadow(0 1px 2px rgba(40,70,110,.3))}
+#bkFish .sh{display:block;width:100%;height:100%;background:#4678aa;opacity:.45;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+#bkFish .t{position:absolute;transform:translate(-50%,-50%);width:11.5%;text-align:center;font-weight:800;color:#2c5f8f;font-size:calc(var(--bkfs,14px));white-space:nowrap}
+#catchPop{position:absolute;left:50%;top:28%;z-index:1550;transform:translate(-50%,-10px) scale(.9);opacity:0;transition:opacity .35s,transform .35s;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;background:rgba(255,250,240,.95);border-radius:22px;padding:14px 22px;box-shadow:0 4px 14px rgba(0,60,90,.35);color:var(--ink);font-weight:800}
+#catchPop.on{opacity:1;transform:translate(-50%,0) scale(1)}#catchPop img{width:150px;max-height:110px;object-fit:contain}#catchPop .n{font-size:20px}#catchPop .s{font-size:13px;color:#2c8f6f}
+</style>
+</head>
+<body>
+<div id="startScreen"><img src="img/chara/chiikawa.webp" alt=""><div class="ssT">먼작귀의 작은 여름집</div><div class="ssB">터치해서 시작 ♪</div><div class="ssGuide" id="ssGuide"></div><div class="ssInst" id="ssInst"><div class="q">당신의 곁에 이사가도 될까요?</div><div class="bt"><button type="button" id="ssIos">iOS</button><button type="button" id="ssAnd">Android</button></div></div></div>
+<div id="stage">
+  <div id="world">
+    <div id="bgPm"></div>
+    <div id="bgSet"></div>
+    <div id="bgEve"></div>
+    <div id="bgTw"></div>
+    <div id="bgNt"></div>
+    <div id="bgN2"></div>
+    <div id="bgN3"></div>
+    <div id="fan"><div id="fanBlades"><i class="bl"></i><i class="bl b2"></i></div></div>
+    <button class="door" id="doorL" style="left:140px;top:735px">◀ 주방</button>
+    <button class="door" id="doorB" style="left:1335px;top:690px">화장실 ▶</button>
+    <button class="door foot" id="doorYard" style="left:1100px;top:690px"><b>👣</b>마당으로</button>
+    <div class="curt" id="cL"><div class="in"><img src="img/ui/curtain-left.webp" alt=""></div></div>
+    <div class="curt" id="cR"><div class="in"><img src="img/ui/curtain-right.webp" alt=""></div></div>
+    <div id="char" style="width:200px">
+      <div id="bubble"></div>
+      <div id="stat">
+        <div class="name">치이카와</div>
+        <div class="row"><span>배고픔</span><div class="bar"><i id="b-hunger" style="background:var(--pink)"></i></div></div>
+        <div class="row"><span>기운</span><div class="bar"><i id="b-energy" style="background:var(--blue)"></i></div></div>
+        <div class="row"><span>청결</span><div class="bar"><i id="b-clean" style="background:var(--green)"></i></div></div>
+        <div id="mood"></div>
+      </div>
+      <div id="flip"><div id="body"><img class="f oc" src="img/chara/chiikawa.webp" alt="치이카와"><img class="f oo" src="img/chara/chiikawa-open.webp" alt=""><img class="f cc" src="img/chara/chiikawa-blink.webp" alt=""><img class="f co" src="img/chara/chiikawa-blink-open.webp" alt=""><img class="f h1" src="img/chara/chiikawa-hurt1.webp" alt=""><img class="f h2" src="img/chara/chiikawa-hurt2.webp" alt=""><img class="f h3" src="img/chara/chiikawa-surprise-red.webp" alt=""><div id="shyL"><img class="a" src="img/chara/chiikawa-shy-a.webp" alt=""><img class="b" src="img/chara/chiikawa-shy-b.webp" alt=""></div></div></div>
+    </div>
+  </div>
+  <div id="world2" style="width:1448px;height:1086px">
+    <div id="kbg"></div><div id="kbgSet"></div><div id="kbgEve"></div><div id="kbgTw"></div><div id="kbgNt"></div><div id="kbgMid"></div><div id="ktint"></div>
+    <div id="hPeek"><div class="hp"><img src="img/chara/hachiware-peek.webp" alt=""></div></div><div id="hSay"></div>
+    <button class="door" id="doorK" style="left:1290px;top:880px">거실 ▶</button>
+    <button class="door" id="doorOut" style="left:235px;top:735px">🌿 밖으로</button>
+  </div>
+  <div id="world3" style="width:1509px;height:1042px">
+    <div class="bgi" style="background-image:url(img/bg/outside.webp)"></div>
+    <div class="obg" id="obPm" style="background-image:url(img/bg/outside-pm.webp)"></div>
+    <div class="obg" id="obSet" style="background-image:url(img/bg/outside-set.webp)"></div>
+    <div class="obg" id="obEve" style="background-image:url(img/bg/outside-eve.webp)"></div>
+    <div class="obg" id="obTw" style="background-image:url(img/bg/outside-tw.webp)"></div>
+    <div class="obg" id="obNt" style="background-image:url(img/bg/outside-nt.webp)"></div>
+    <img id="oSign" alt="" src="img/signs/osign-sil.webp" style="position:absolute;left:505px;top:500px;width:75px;height:40px;pointer-events:none">
+    <button class="door" id="doorIn" style="left:1385px;top:735px;display:none">🏠 집 안으로</button>
+    <button class="door foot" id="doorMid" style="left:682px;top:696px"><b>👣</b>가운데 길로</button>
+    <button class="door foot" id="doorLeft" style="left:185px;top:540px"><b>👣</b>왼쪽 길로</button>
+    <button class="door foot" id="doorRight" style="left:1245px;top:745px"><b>👣</b>오른쪽 길로</button>
+  </div>
+  <div id="world5" style="width:1513px;height:1039px">
+    <div class="bgi" style="background-image:url(img/bg/lake.webp)"></div>
+    <button class="door foot" id="doorGarden" style="left:775px;top:700px"><b>👣</b>길 끝으로</button>
+  </div>
+  <div id="world7" style="width:1509px;height:1042px">
+    <div class="bgi" style="background-image:url(img/bg/garden.webp)"></div>
+    <div class="obg" id="gSet" style="background-image:url(img/bg/garden-set.webp)"></div>
+    <div class="obg" id="gEve" style="background-image:url(img/bg/garden-eve.webp)"></div>
+    <div class="obg" id="gNt" style="background-image:url(img/bg/garden-nt.webp)"></div>
+    <div class="obg" id="gN2" style="background-image:url(img/bg/garden-n2.webp)"></div>
+    <img id="gSign" alt="" src="img/signs/sign-sil.webp" style="position:absolute;left:780px;top:418px;width:170px;height:100px;pointer-events:none">
+    <div class="hot" id="gSignHot" style="left:780px;top:418px;width:170px;height:100px"></div>
+  </div>
+  <div id="world8" style="width:1509px;height:1042px">
+    <div class="bgi" style="background-image:url(img/bg/cove.webp)"></div>
+    <div class="obg" id="cvPm" style="background-image:url(img/bg/cove-pm.webp)"></div>
+    <div class="obg" id="cvSet" style="background-image:url(img/bg/cove-set.webp)"></div>
+    <div class="obg" id="cvEve" style="background-image:url(img/bg/cove-eve.webp)"></div>
+    <div class="obg" id="cvTw" style="background-image:url(img/bg/cove-tw.webp)"></div>
+    <div class="obg" id="cvNt" style="background-image:url(img/bg/cove-nt.webp)"></div>
+    <button class="door foot" id="doorCend" style="left:1040px;top:780px"><b>👣</b>길 끝으로</button>
+  </div>
+  <div id="world9" style="width:1509px;height:1042px">
+    <div class="bgi" style="background-image:url(img/bg/cove-end.webp)"></div>
+    <div class="obg" id="cnPm" style="background-image:url(img/bg/cend-pm.webp)"></div>
+    <div class="obg" id="cnSet" style="background-image:url(img/bg/cend-set.webp)"></div>
+    <div class="obg" id="cnEve" style="background-image:url(img/bg/cend-eve.webp)"></div>
+    <div class="obg" id="cnTw" style="background-image:url(img/bg/cend-tw.webp)"></div>
+    <div class="obg" id="cnNt" style="background-image:url(img/bg/cend-nt.webp)"></div>
+    <button class="door" id="doorFish" style="left:970px;top:655px"><b>🎣</b>낚시하기</button>
+  </div>
+  <div id="world10" style="width:1509px;height:1042px">
+    <div class="bgi" style="background-image:url(img/bg/forest.webp)"></div>
+    <div class="obg" id="wdPm" style="background-image:url(img/bg/forest-pm.webp)"></div>
+    <div class="obg" id="wdSet" style="background-image:url(img/bg/forest-set.webp)"></div>
+    <div class="obg" id="wdEve" style="background-image:url(img/bg/forest-eve.webp)"></div>
+    <div class="obg" id="wdNt" style="background-image:url(img/bg/forest-nt.webp)"></div>
+    <button class="door foot" id="doorWend" style="left:540px;top:585px"><b>👣</b>길 끝으로</button>
+    <img id="fSign" alt="" src="img/signs/fsign-sil.webp" style="position:absolute;left:1210px;top:560px;width:56px;height:45px;pointer-events:none">
+  </div>
+  <div id="world11" style="width:1509px;height:1042px">
+    <div class="bgi" style="background-image:url(img/bg/forest-end.webp)"></div>
+    <div class="obg" id="wnSet" style="background-image:url(img/bg/forest-end-set.webp)"></div>
+    <div class="obg" id="wnEve" style="background-image:url(img/bg/forest-end-eve.webp)"></div>
+    <div class="obg" id="wnNt" style="background-image:url(img/bg/forest-end-nt.webp)"></div>
+    <button class="door foot" id="doorHill" style="left:1192px;top:565px"><b>👣</b>오른쪽 길로</button>
+  </div>
+  <div id="world13" style="width:1509px;height:1042px">
+    <div class="bgi" style="background-image:url(img/bg/fishing.webp)"></div>
+    <button class="door" id="castBtn" style="left:760px;top:690px"><b>🎣</b>낚시 시작</button>
+    <div id="fLine"></div>
+    <div id="fFloat"><span class="r"></span><span class="r"></span><span class="fb"></span></div>
+    <img id="fPose" src="img/minigame/fishing/fish-pose.webp" alt="" draggable="false">
+    <div id="fBub"></div>
+  </div>
+  <div id="world12" style="width:1509px;height:1042px">
+    <div class="bgi" style="background-image:url(img/bg/burrow.webp)"></div>
+  </div>
+  <div id="world6" style="width:1536px;height:1024px">
+    <div class="bgi" style="background-image:url(yard.webp)"></div>
+  </div>
+  <div id="world4" style="width:1448px;height:1086px">
+    <div class="bgi" style="background-image:url(img/bg/bath.webp)"></div>
+    <div class="hot" id="tubHot" style="left:430px;top:560px;width:490px;height:180px"></div>
+    <button class="door" id="doorBL" style="left:250px;top:930px">◀ 거실</button>
+  </div>
+  <div id="tint"></div>
+  <div id="sbShade"></div>
+  <div id="fade"></div>
+  <div id="tubView"><div class="bgi" id="tubBg"></div><button id="tubBack">◀ 돌아가기</button></div>
+  <div id="washView">
+    <div id="washBg"></div>
+    <div id="wChar"><div id="wClip"><img id="wImg" src="img/chara/chiikawa.webp" alt="" draggable="false"><div id="wFoam"></div></div><div id="wWater"></div></div>
+    <div id="wBubbles"></div>
+    <div id="wBub"></div>
+    <div id="washPlay"></div>
+    <img id="wTool" alt="" draggable="false">
+    <button id="washBack">◀ 그만하기</button>
+    <div id="washHint"></div>
+    <div id="wTray">
+      <button data-t="body"><img src="img/minigame/wash/wash-body.webp" alt="" draggable="false">바디워시</button>
+      <button data-t="sham"><img src="img/minigame/wash/wash-shampoo.webp" alt="" draggable="false">샴푸</button>
+      <button data-t="ball"><img src="img/minigame/wash/wash-ball.webp" alt="" draggable="false">샤워볼</button>
+      <button data-t="shower"><img src="img/minigame/wash/wash-shower.webp" alt="" draggable="false">샤워기</button>
+    </div>
+  </div>
+  <div id="ckV">
+    <div class="ckBg" id="ckB1"></div><div class="ckBg" id="ckB2"></div>
+    <img id="ckChi" src="img/chara/chiikawa.webp" alt="" draggable="false">
+    <div id="ckSay"></div><div id="ckRes"></div>
+    <button id="ckBack">◀ 그만하기</button><button id="ckDex">📖 요리 모음</button>
+    <div id="ckStoveBox"><div id="ckPot">🍲</div><div id="ckGauge"><div id="ckMk"></div></div><button id="ckStop">🔥 불 끄기!</button></div>
+    <div id="ckPickBox"><div id="ckSlots"></div><div id="ckTray"></div><button id="ckGo">요리하기!</button></div>
+    <div id="ckDexBox"><div class="in"><b>📖 요리 모음</b><div class="g" id="ckDexG"></div></div></div>
+  </div>
+  <div id="catchPop"></div>
+  <div id="fishGet">
+    <div class="fgBlur"></div>
+    <img class="fgImg" src="img/minigame/fishing/fish-get.webp" alt="" draggable="false">
+    <div class="fgFlash"></div>
+    <div id="fgRewards"><span class="fgPill">💗 호감도 +5</span><span class="fgPill"><img src="img/minigame/dex/book-icon.webp" alt="">도감 아이콘이 생겼어요</span></div>
+    <div id="fgText"></div>
+    <div id="fgHint">화면을 눌러 계속하기</div>
+  </div>
+  <div id="bookView">
+    <div id="bkRot">📱 페이지를 누르면 크게 볼 수 있어요 (가로로 돌려도 좋아요)</div>
+    <button id="bkClose" aria-label="도감 닫기">✕</button>
+    <div id="bkWrap"><div id="bkStage">
+      <img id="bkCover" src="img/minigame/dex/book-cover.webp" alt="">
+      <img id="bkOpen" src="img/minigame/dex/book-open-fx.webp" alt=""><div id="bkFish"></div>
+      <img class="bkf" src="img/minigame/dex/book-flip1.webp" alt=""><img class="bkf" src="img/minigame/dex/book-flip2.webp" alt=""><img class="bkf" src="img/minigame/dex/book-flip3.webp" alt=""><img class="bkf" src="img/minigame/dex/book-flip4.webp" alt=""><img class="bkf" src="img/minigame/dex/book-flip5.webp" alt="">
+    </div></div>
+    <div id="bkBar"><button id="bkPrev" aria-label="이전 장">◀</button><div id="bkPage">1 / 3</div><button id="bkNext" aria-label="다음 장">▶</button></div>
+  </div>
+  <div id="top" class="ui">
+    <div class="pill card">🌿 먼작귀의 작은 여름집</div>
+    <div style="display:flex;gap:6px"><div class="pill card" id="clock">--:--</div><div class="pill card" id="lovePill"><span id="faceB"></span><span id="heartE">💗</span><span id="love">0</span></div></div>
+  </div>
+  <button id="lakeBack" class="ui" aria-label="돌아가기">👣</button>
+  <button id="outBtn" class="ui on" aria-label="집 앞 갈림길로">🌿</button>
+  <button id="homeBtn" class="ui" aria-label="집 안으로">🏠</button>
+  <button id="bookBtn" class="ui" aria-label="도감"><img src="img/minigame/dex/book-icon.webp" alt="" draggable="false"></button>
+  <div id="menu" class="ui card">
+    <button data-a="feed"><b>🍙</b>밥 주기</button>
+    <button data-a="play"><b>🧸</b>놀아주기</button>
+    <button data-a="wash"><b>🫧</b>씻겨주기</button>
+    <button data-a="sleep" id="sleepBtn"><b>🛏️</b>재우기</button>
+  </div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const stage=$('#stage'),world=$('#world'),ch=$('#char'),flip=$('#flip'),body=$('#body'),bub=$('#bubble');
+let IW=1536,IH=1024;                       // 방 그림 크기(px) — 아래 좌표는 모두 이 그림 기준
+let curRoom='living',moving=false,curWorld=world,tubOpen=false;
+function mainRoom(){return (curRoom==='living'||curRoom==='kitchen')&&!tubOpen}   // 노크·하치와레 방문 연출은 거실/부엌에서만
+const EXIT_L=125,EXIT_R=1300,EXIT_LR=1340,EXIT_BL=350,EXIT_OUT=1400;             // 이 위치까지 걸어가면 방이 바뀜
+// ---- 밖 왼쪽 갈림길: 호감도 100 전에는 치이카와가 못 가게 막아요 (첫 번째는 항상 "더 친해지면 같이 가자!", 그 뒤로는 랜덤) ----
+const EXIT_OUT_L=240,LEFT_NEED=100;   // 밖 왼쪽 돌길을 따라 맨 끝(x 240 이하)까지 걸어가면 숲 오솔길로 들어가요
+// ---- 밖 가운데 길 -> 호숫가 (돌길 위쪽 가운데로 걸어가면 들어가고, 호숫가 아래로 내려오면 돌아와요) ----
+const MID_Y=815,MID_X0=770,MID_X1=960,LAKE_BACK_Y=1026;
+// 빠르게 걸어가서 들어가는 곳들: 발자국 버튼을 한 번 누르거나, 그쪽 길을 두 번 터치하면 돼요
+const DEST={
+  lake:{room:'outside',x:682,y:815,area:{x0:560,x1:830,y0:680,y1:900},go:()=>switchRoom('lake',860,835,1)},
+  garden:{room:'lake',x:775,y:775,area:{x0:640,x1:920,y0:640,y1:790},go:()=>switchRoom('garden',640,1000,1)},
+  cove:{room:'outside',x:1250,y:830,area:{x0:1150,x1:1380,y0:690,y1:860},go:()=>switchRoom('cove',880,1020,1)},   // 밖 갈림길 맨 오른쪽 길 -> 호수가 내려다보이는 돌계단 길
+  cend:{room:'cove',x:1040,y:845,area:{x0:900,x1:1200,y0:700,y1:850},go:()=>switchRoom('cend',720,1020,1)},   // 돌계단 길 끝 -> 낚시터
+  wend:{room:'wood',x:560,y:650,area:{x0:440,x1:700,y0:560,y1:760},go:()=>switchRoom('wend',820,1020,1)},   // 숲 오솔길 끝 -> 갈림길 표지판이 있는 숲 끝
+  fish:{room:'cend',x:915,y:690,area:{x0:895,x1:1050,y0:595,y1:670},go:()=>switchRoom('fish',760,515,1)},   // 부두 끝 -> 낚시 화면 (부두 위를 걸어가요)
+  hill:{room:'wend',x:1195,y:625,area:{x0:1100,x1:1260,y0:580,y1:800},go:()=>switchRoom('hill',850,1020,1)},   // 숲 끝 오른쪽 길 -> 언덕 위 둥근 문 집
+  yard:{room:'living',x:1100,y:790,area:{x0:900,x1:1290,y0:630,y1:745},go:()=>switchRoom('yard',700,850,1)}
+};
+const DBL_ENTER=false;   // true로 바꾸면 길을 두 번 눌러서 그 길로 들어가는 기능이 다시 켜져요 (지금은 꺼둠: 발자국 버튼으로만 이동)
+let midGo=null;   // 가는 중인 곳. 도착하는 순간 그 장소로 들어가요
+function goDest(k){
+  const D=DEST[k];if(sleeping||moving||hEvt||curRoom!==D.room)return;
+  const t=clampPt(D.x,D.y);midGo={room:D.room,x:t.x,y:t.y,go:D.go};arrivedSay=false;
+  if(ctrlH()){HA.T={x:t.x,y:t.y};hRun=true}
+  else{goTo(t.x,t.y);running=true}
+}
+function goNow(k){   // 걸어가지 않고 바로 장면 이동 ("가운데 길로" 버튼)
+  const D=DEST[k];if(sleeping||moving||hEvt||curRoom!==D.room)return;
+  midGo=null;arrivedSay=false;D.go();
+}
+function wY(y){if(curRoom==='cend')return Math.max(y,900);return curRoom==='outside'||curRoom==='lake'||curRoom==='cove'||curRoom==='wood'||curRoom==='wend'?Math.max(y,FLOOR.y0+60):y}   // 마음대로 돌아다니다가 출구로 나가버리지 않게
+const LEFT_LINES=['저쪽은… 더 친해지면 같이 가자! 에헤헤','으응… 저쪽은 아직 조금 무서워…','아직은 비밀이야…! 나중에 알려줄게~','저쪽 길은 가본 적 없어서… 길 잃으면 어떡해…','너무 멀리 가면 집이 쓸쓸해할 거야…'];
+let leftCd=0,leftLast=-1;
+function leftBlock(){
+  const now=Date.now();if(now<leftCd)return;leftCd=now+3500;
+  let k=0;
+  if(S.leftSaid){do{k=Math.random()*LEFT_LINES.length|0}while(k===leftLast&&LEFT_LINES.length>1)}
+  leftLast=k;S.leftSaid=true;save();
+  if(P.x<690)goTo(600,790);else goTo(880,P.y);say(LEFT_LINES[k],2600)
+}
+const H_LEFT_LINES=['앗, 저쪽은 아직 못 가겠어~ 더 친해지면 같이 가자!','음~ 저쪽은 조금 더 친해지고 나서 가볼래!','아직은 비밀이야~! 나중에 같이 가보자!','저쪽 길은 처음이라 좀 떨려… 조금만 더 친해지면!'];
+let hLeftCd=0,hLeftLast=-1;
+function hLeftBlock(){   // 하치와레를 움직이는 중에 왼쪽 길 끝에 닿았는데 하치와레 호감도가 100 전일 때
+  const now=Date.now();if(now<hLeftCd)return;hLeftCd=now+3500;
+  let k;do{k=Math.random()*H_LEFT_LINES.length|0}while(k===hLeftLast&&H_LEFT_LINES.length>1);
+  hLeftLast=k;
+  HA.T=HA.x<690?{x:600,y:790}:{x:880,y:HA.y};hRun=false;
+  hSay(H_LEFT_LINES[k],2600)
+}
+const ROOMS={
+  living:{w:1536,h:1024,el:world,charW:200,hor:416,ref:880,floor:{x0:110,x1:1390,y0:750,y1:880},wander:[300,1380]},
+  kitchen:{w:1448,h:1086,el:$('#world2'),charW:154,hor:460,ref:880,floor:{x0:230,x1:1320,y0:730,y1:950},wander:[300,1240]},
+  outside:{w:1509,h:1042,el:$('#world3'),charW:154,hor:293,ref:960,floor:{x0:690,x1:1420,y0:810,y1:1030},wander:[790,1370]},
+  lake:{w:1513,h:1039,el:$('#world5'),charW:172,hor:560,ref:1000,floor:{x0:600,x1:1140,y0:770,y1:845},wander:[700,1010]},   // 밖 가운데 길 끝: 호숫가 돌길
+  cove:{w:1509,h:1042,el:$('#world8'),charW:172,hor:600,ref:1000,floor:{x0:520,x1:1340,y0:830,y1:1035},wander:[700,1200]},   // 밖 오른쪽 길: 호수가 내려다보이는 돌계단 길
+  cend:{w:1509,h:1042,el:$('#world9'),charW:150,hor:480,ref:1000,floor:{x0:360,x1:1100,y0:640,y1:1035},wander:[480,940]},   // 오른쪽 길 끝: 낚시터
+  wood:{w:1509,h:1042,el:$('#world10'),charW:172,hor:430,ref:1000,floor:{x0:455,x1:1050,y0:640,y1:1035},wander:[560,950]},   // 밖 왼쪽 길(호감도 100부터): 숲속 오솔길
+  wend:{w:1509,h:1042,el:$('#world11'),charW:172,hor:380,ref:1000,floor:{x0:590,x1:1255,y0:620,y1:1035},wander:[700,1050]},   // 숲 오솔길 끝: 갈림길 표지판이 있는 숲 끝 (오른쪽 길로 올라갈 수 있어요)
+  fish:{w:1509,h:1042,el:$('#world13'),charW:172,hor:250,ref:750,floor:{x0:520,x1:1010,y0:470,y1:528},wander:[620,920]},   // 낚시 화면: 부두 위에 서서 낚시해요
+  hill:{w:1509,h:1042,el:$('#world12'),charW:172,hor:400,ref:1000,floor:{x0:525,x1:1090,y0:740,y1:1035},wander:[560,950]},   // 숲 끝 오른쪽 길: 언덕 위 둥근 문 집
+  garden:{w:1509,h:1042,el:$('#world7'),charW:140,hor:510,ref:960,floor:{x0:330,x1:900,y0:770,y1:1030},wander:[460,670]},   // 호숫가 돌길 끝: 돌담집 앞 정원
+  yard:{w:1536,h:1024,el:$('#world6'),charW:200,hor:420,ref:900,floor:{x0:200,x1:1290,y0:670,y1:860},wander:[450,1250]},   // 거실 열린 문 밖 마당
+  bath:{w:1448,h:1086,el:$('#world4'),charW:200,hor:620,ref:960,floor:{x0:330,x1:880,y0:880,y1:1040},wander:[400,850]}
+};
+let FLOOR=ROOMS.living.floor;  // 걸을 수 있는 바닥 영역
+let CHAR_W=200;                            // 맨 앞(아래쪽)에 있을 때 캐릭터 너비
+const WALK_SPEED=60;                         // 걷는 속도(px/초) — 낮을수록 느긋
+const MOUTH_HOLD=450;                        // 말이 끝난 뒤 입을 벌리고 있는 시간(ms)
+const WANDER_MIN=8000,WANDER_MAX=15000;      // 혼자 돌아다니는 간격(ms) — 차분하게
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+// 오른쪽 아래 테이블 앞쪽은 막아둠
+function clampPt(x,y){
+  if(curRoom==='outside'&&x<690&&y>=FLOOR.y0)y=Math.max(500,FLOOR.y0-(690-x)*.6);   // 왼쪽 아래(꽃밭)를 눌러도 x 690에서 멈추지 않고 왼쪽 길을 따라 올라가요
+  if(curRoom==='outside'&&x<690&&y<FLOOR.y0){   // 밖 왼쪽 돌길: 가운데 길에서 왼쪽 위로 이어지는 길을 따라 걸어갈 수 있어요 (꽃밭·울타리는 막아둠)
+    const L=[[500,100,190],[560,150,255],[600,205,305],[650,230,365],[700,265,410],[740,310,520],[790,440,690],[810,470,690]];
+    y=clamp(y,L[0][0],FLOOR.y0);let a=L[0],b=L[L.length-1];for(let i=1;i<L.length;i++)if(y<=L[i][0]){a=L[i-1];b=L[i];break}
+    const u=clamp((y-a[0])/(b[0]-a[0]),0,1);return{x:clamp(x,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u),y}
+  }
+  x=clamp(x,FLOOR.x0,FLOOR.x1);
+  if(curRoom==='lake'){y=clamp(y,FLOOR.y0,FLOOR.y1);const t=(y-FLOOR.y0)/260;return{x:clamp(x,675-50*t,875+240*t),y}}   // 돌길은 위로 갈수록 좁아져요
+  if(curRoom==='cove'){y=clamp(y,FLOOR.y0,FLOOR.y1);const t=(y-830)/205;return{x:clamp(x,960-440*t,1130+210*t),y}}   // 돌계단 길은 위로 갈수록 좁아져요
+  if(curRoom==='wood'){y=clamp(y,FLOOR.y0,FLOOR.y1);const L=[[640,455,650],[700,505,740],[800,545,840],[900,585,900],[1000,610,1020],[1035,620,1050]];let a=L[0],b=L[L.length-1];for(let i=1;i<L.length;i++)if(y<=L[i][0]){a=L[i-1];b=L[i];break}const u=clamp((y-a[0])/(b[0]-a[0]),0,1);return{x:clamp(x,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u),y}}   // 오솔길을 벗어나 풀숲으로는 못 가요
+  if(curRoom==='wend'){y=clamp(y,FLOOR.y0,FLOOR.y1);if(y<840&&x<1050)y=840;let L=y>=840?[[840,590,1200],[900,610,1170],[1000,650,1085],[1035,665,1065]]:[[620,1165,1235],[700,1150,1252],[780,1110,1255],[840,1000,1200]];let a=L[0],b=L[L.length-1];for(let i=1;i<L.length;i++)if(y<=L[i][0]){a=L[i-1];b=L[i];break}const u=clamp((y-a[0])/(b[0]-a[0]),0,1);return{x:clamp(x,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u),y}}   // 아래 넓은 길과 오른쪽 길로만 걸어요 (가운데 언덕·바위·풀숲은 막아둠)
+  if(curRoom==='hill'){y=clamp(y,FLOOR.y0,FLOOR.y1);const L=[[740,596,702],[800,525,712],[850,535,750],[900,565,795],[950,605,905],[1000,655,1040],[1035,690,1090]];let a=L[0],b=L[L.length-1];for(let i=1;i<L.length;i++)if(y<=L[i][0]){a=L[i-1];b=L[i];break}const u=clamp((y-a[0])/(b[0]-a[0]),0,1);return{x:clamp(x,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u),y}}   // 돌계단 길로만 걸어요
+  if(curRoom==='fish'){y=clamp(y,FLOOR.y0,FLOOR.y1);const t=(y-470)/95;return{x:clamp(x,620-100*t,930+80*t),y}}   // 부두 널빤지 위로만 걸어요
+  if(curRoom==='cend'){y=clamp(y,FLOOR.y0,FLOOR.y1);if(y>=900){const t=clamp((y-900)/90,0,1);return{x:clamp(x,660-300*t,960+40*t),y}}const L=[[640,855,945],[660,825,945],[690,780,945],[720,735,945],[750,690,945],[780,665,925],[800,665,915],[815,665,920],[840,650,915],[870,650,920],[900,660,960]];let a=L[0],b=L[L.length-1];for(let i=1;i<L.length;i++)if(y<=L[i][0]){a=L[i-1];b=L[i];break}const u=clamp((y-a[0])/(b[0]-a[0]),0,1);return{x:clamp(x,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u),y}}   // 길 -> 풀밭 -> 부두 널빤지 위로 걸어요 (앞쪽 기둥 오른쪽·물 위는 막아둠)   // 왼쪽 접이식 의자·낚싯대 앞, 오른쪽 바위 앞은 막아둠
+  if(curRoom==='garden'){y=clamp(y,FLOOR.y0,FLOOR.y1);const t=clamp((y-945)/85,0,1);return{x:clamp(x,420-40*t,700+120*t),y}}   // 대문 두 짝 사이로만 걸어요 (문짝 위로는 못 올라가요)
+  if(curRoom==='yard'){y=clamp(y,FLOOR.y0,FLOOR.y1);return{x:clamp(x,y>=840?200:y>=780?360:450,y<740?1070:1290),y}}   // 왼쪽 탁자·화분, 오른쪽 바구니·벤치 앞은 막아둠
+  if(curRoom==='outside'||curRoom==='bath')return{x,y:clamp(y,FLOOR.y0,FLOOR.y1)};
+  if(curRoom==='kitchen'){y=clamp(y,x<700?880:x<1000?775:FLOOR.y0,x>1080?945:FLOOR.y1);return{x,y}}   // 왼쪽은 현관 앞, 가운데는 냉장고 앞, 오른쪽은 트인 바닥
+  y=clamp(y,FLOOR.y0,x>840?845:FLOOR.y1);if(x<330)y=Math.min(y,775);   // 오른쪽 아래 테이블·왼쪽 소파 앞은 막아둠
+  return{x,y}
+}
+
+let S;
+try{S=JSON.parse(localStorage.getItem('cw-save'))}catch(e){}
+S=Object.assign({hGarden:false,gHint0:false,gHint1:false,leftSaid:false,love:72,hunger:70,energy:70,clean:70,hArrived:false,hLove:0,uArrived:false,hHunger:70,hEnergy:70,hClean:70,hHere:false,hStay:0,hNext:0,uStay:0,uNext:0,uLove:20,uHunger:70,uEnergy:70,uClean:70,uDue:false,t:Date.now()},S||{});   // love=치이카와 호감도, hLove=하치와레 호감도(등장 후)
+let sleeping=false;
+function decay(min){
+  S.hunger=clamp(S.hunger-1.2*min,0,100);
+  S.clean=clamp(S.clean-0.8*min,0,100);
+  if(!sleeping)S.energy=clamp(S.energy-0.6*min,0,100);
+}
+decay(Math.min((Date.now()-S.t)/60000,480));
+function save(){S.t=Date.now();try{localStorage.setItem('cw-save',JSON.stringify(S))}catch(e){}}
+// ---- 호감도 표시: 캐릭터마다 얼굴 배지와 색이 달라요 (하치와레는 등장하면 열려요) ----
+const CHARS={
+  chiikawa:{face:'img/chara/face-chiikawa.webp',heart:'💗',c:'#f48fb1',bg:'#ffe9f0',ink:'#b83b6b',love:()=>S.love,on:()=>true},
+  hachiware:{face:'img/chara/face-hachiware.webp',heart:'💙',c:'#6fb4f0',bg:'#e6f3ff',ink:'#2b6cb0',love:()=>S.hLove,on:()=>!!S.hArrived},
+  usagi:{face:'img/chara/face-usagi.webp',heart:'💛',c:'#f2c94c',bg:'#fff6cf',ink:'#8a6a00',love:()=>S.uLove,on:()=>!!S.uArrived}
+};
+let hudWho='chiikawa',hSleeping=false,uSleeping=false;   // 놀러 온 하치와레·우사기가 자는 중인지
+function sleepLabel(){const on=hudWho==='hachiware'?hSleeping:hudWho==='usagi'?uSleeping:sleeping;const b=$('#sleepBtn');if(b)b.innerHTML=on?'<b>☀️</b>깨우기':'<b>🛏️</b>재우기'}   // 재우기 버튼은 호감도 칸에서 고른 캐릭터 기준
+function renderHud(){
+  const d=CHARS[hudWho],p=$('#lovePill');
+  p.style.setProperty('--cc',d.c);p.style.setProperty('--cb',d.bg);p.style.setProperty('--ci',d.ink);
+  $('#faceB').style.backgroundImage='url('+d.face+')';$('#heartE').textContent=d.heart;
+  $('#love').textContent=Math.round(d.love());
+  sleepLabel();
+}
+function setHud(who){if(CHARS[who]&&CHARS[who].on()&&who!==hudWho){hudWho=who;renderHud()}}   // 쓰다듬거나 말을 건 캐릭터로 바꿔요
+let hCallUntil=0,hCallAt=0,uCallUntil=0,uCallAt=0;   // 호감도 칸을 하치와레로 바꾸면, 집에 없을 때 놀러 오라고 부른 걸로 쳐요 (1분 안에 조건이 맞으면 찾아와요)
+$('#lovePill').addEventListener('click',()=>{const ks=Object.keys(CHARS).filter(k=>CHARS[k].on());setHud(ks[(ks.indexOf(hudWho)+1)%ks.length]);
+  if(hudWho==='hachiware'&&S.hArrived&&!S.hHere){hCallUntil=Date.now()+60000;hCallAt=Date.now()+1500}
+  if(hudWho==='usagi'&&S.uArrived&&!UA.on){uCallUntil=Date.now()+60000;uCallAt=Date.now()+1500}});   // 부르면 1.5초 뒤에 발소리부터 시작해요
+let loveOver=null,singDue=false;   // 호감도가 80을 막 넘었는지 기억해 둬요 (넘는 순간 노래 한 번 예약)
+function renderStats(){
+  {const over=Math.round(S.love)>SING_LOVE;if(loveOver!==null&&over&&!loveOver)singDue=true;if(!over)singDue=false;loveOver=over}
+  for(const k of ['hunger','energy','clean'])$('#b-'+k).style.width=Math.round(S[k])+'%';
+  renderHud();
+  const low=[['hunger','배고파요 🥺'],['energy','졸려요 😪'],['clean','씻고 싶어요 🫧']].sort((a,b)=>S[a[0]]-S[b[0]])[0];
+  {const H=[['hHunger','배고파요 🥺'],['hEnergy','졸려요 😪'],['hClean','씻고 싶어요 🫧']];for(const [k] of H)hc.querySelector('#b-'+k.toLowerCase()).style.width=Math.round(S[k])+'%';
+   const hl=H.slice().sort((a,b)=>S[a[0]]-S[b[0]])[0];hc.querySelector('#hmood').textContent=S[hl[0]]<30?hl[1]:'기분 좋아요 ☺️'}
+  {const U=[['uHunger','배고파요 🥺'],['uEnergy','졸려요 😪'],['uClean','씻고 싶어요 🫧']];for(const [k] of U)uc.querySelector('#b-'+k.toLowerCase()).style.width=Math.round(S[k])+'%';
+   const ul=U.slice().sort((a,b)=>S[a[0]]-S[b[0]])[0];uc.querySelector('#umood').textContent=S[ul[0]]<30?ul[1]:'기분 좋아요 ☺️'}
+  $('#mood').textContent=sleeping?'쿨쿨… 💤':(S[low[0]]<30?low[1]:'기분 좋아요 ☺️');
+}
+// ---- 시간대 배경 크로스페이드 ----
+const LAYERS={pm:$('#bgPm'),set:$('#bgSet'),eve:$('#bgEve'),tw:$('#bgTw'),nt:$('#bgNt'),n2:$('#bgN2'),n3:$('#bgN3')};
+// 시간대 -> 배경 이름 (밤 9시~11시 nt / 11시~12시 n2 / 12시~5시 n3)
+function bgKey(h){return h===23?'n2':h<5?'n3':h>=21?'nt':h>=20?'tw':h>=18?'eve':h>=17?'set':h>=13?'pm':'base'}
+let curBg=null;
+function setBg(key){
+  if(key===curBg)return;
+  const first=curBg===null,prev=LAYERS[curBg],next=LAYERS[key];
+  if(first)for(const k in LAYERS)if(k!==key)LAYERS[k].style.display='none';
+  if(next){
+    next.style.display='';world.insertBefore(next,$('#fan'));void next.offsetWidth;   // 들어오는 그림을 맨 위로
+    next.style.transition=first?'none':'opacity 2.5s';next.style.opacity=1;
+  }
+  if(prev){
+    prev.style.transition=next?'opacity 0s linear 2.5s':'opacity 2.5s'; // 다른 그림으로 바뀔 땐 다 덮인 뒤에 제거
+    prev.style.opacity=0;
+    const pk=curBg;setTimeout(()=>{if(curBg!==pk&&LAYERS[pk])LAYERS[pk].style.display='none'},2800);
+  }
+  curBg=key;
+}
+let fakeH=null;                                   // 시계를 눌러 시간대를 미리 볼 때 사용
+const nowH=()=>fakeH!=null?fakeH:new Date().getHours();
+function tickClock(){
+  const d=new Date(),h=nowH();
+  $('#clock').textContent=(fakeH!=null?'🔧 ':'')+String(h).padStart(2,'0')+':'+(fakeH!=null?'00':String(d.getMinutes()).padStart(2,'0'));
+  stage.classList.toggle('pm4',h>=16&&h<17);      // 오후 4시~5시: 돌계단 길의 오후 황금빛 그림
+  stage.classList.toggle('pm',h>=13&&h<17);       // 오후 1시~5시: 오후 배경
+  stage.classList.toggle('set',h>=17&&h<18);      // 오후 5시~6시: 노을 배경
+  setBg(bgKey(h));ambPick();gSignSet();
+  if(window.ffReady)ffOn=(h>=21||h<5);   // 반딧불이: 밤 9시~새벽 5시
+  stage.classList.toggle('n23',h===23);             // 밤 11시: 달밤을 살짝 어둡게
+  stage.classList.toggle('mid',h<5);                // 밤 12시~5시: 가장 어두운 밤 (부엌 그림)
+  stage.classList.toggle('nt',h>=21||h<5);          // 오후 9시 이후: 밤 배경
+  stage.classList.toggle('tw',h>=20&&h<21);        // 오후 8시~9시: 해질녘 배경
+  stage.classList.toggle('eve',h>=18&&h<20);       // 오후 6시~8시: 저녁 배경
+  stage.classList.toggle('dusk1',h>=17&&h<18);stage.classList.toggle('dusk2',h>=18&&h<20);
+  let c='transparent';
+  if(h>=21||h<5)c='rgba(20,30,90,.08)';else if(h>=20)c='rgba(30,40,110,.14)';else if(h>=17)c=h<18?'rgba(255,150,70,.1)':'rgba(255,150,70,.12)';
+  if(sleeping)c='rgba(10,15,50,.45)';
+  $('#tint').style.background=c;
+}
+
+// ---- 위치/이동/카메라 ----
+const P={x:760,y:800};let T=null,last=0,arrivedSay=false;
+let W=1,H=1,k=1,camX=0,camY=0;
+// 호감도 칸에서 하치와레를 고르면(놀러 와 있는 동안) 내가 움직이는 캐릭터도 하치와레로 바뀌어요
+function ctrlU(){try{return hudWho==='usagi'&&UA.on&&!uLeaving&&!hEvt}catch(e){return false}}
+function ctrlH(){try{return hudWho==='hachiware'&&HA.on&&!hLeaving&&!hEvt}catch(e){return false}}
+function focusPt(){return ctrlH()?HA:P}
+function camTarget(){const F=focusPt();return{x:clamp(W/2-F.x*k,W-IW*k,0),y:clamp(H*.6-F.y*k,H-IH*k,0)}}
+let lastCamS='',lastCamW=null;
+function applyCam(){const v='translate('+camX.toFixed(2)+'px,'+camY.toFixed(2)+'px) scale('+k+')';if(v===lastCamS&&curWorld===lastCamW)return;lastCamS=v;lastCamW=curWorld;curWorld.style.transform=v}
+const STANDALONE=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+// 화면 높이: 고정(fixed) 박스가 실제로 차지하는 높이를 쓰고, 홈 화면 앱에서 짧게 잡히면 기기 화면 높이로 보정
+function viewH(){return stage.clientHeight||innerHeight}
+function fit(){stage.style.height='';W=stage.clientWidth;H=viewH();if(H!==stage.clientHeight)stage.style.height=H+'px';k=Math.max(W/IW,H/IH);document.documentElement.style.setProperty('--z',clamp(.78/k,1,1.7).toFixed(3));const c=camTarget();camX=c.x;camY=c.y;applyCam()}
+addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,250));addEventListener('pageshow',fit);if(window.visualViewport)visualViewport.addEventListener('resize',fit);[300,1000,2500].forEach(t=>setTimeout(fit,t));
+function place(){
+  const R=ROOMS[curRoom],sc=clamp((P.y-R.hor)/(R.ref-R.hor),.4,1.4);   // 지평선에서 멀어질수록(아래쪽일수록) 크게 // 위쪽(안쪽)일수록 작게
+  const sl=P.x.toFixed(1),st=P.y.toFixed(1),sw=Math.round(CHAR_W*sc)+'px',sz=Math.round(P.y);
+  if(sl!==place.l||st!==place.t){place.l=sl;place.t=st;ch.style.transform='translate('+sl+'px,'+st+'px) translate(-50%,-100%)'}
+  if(sw!==place.w){ch.style.width=place.w=sw}
+  if(sz!==place.z){ch.style.zIndex=place.z=sz}
+  return sc;
+}
+let running=false;const RUN_MULT=2.6;      // 두 번 터치하면 걷기의 2.6배 속도로 뛰어감
+function goTo(x,y){stopSing();running=false;T=clampPt(x,y)}
+// ---- 놀러 온 하치와레 (HA): 치이카와와 같은 방에서 돌아다녀요. 방을 옮기면 따라와요 ----
+const HA={x:0,y:0,T:null,on:false};let hRun=false;
+const hc=document.createElement('div');hc.id='hc';
+hc.innerHTML='<div id="hstat"><div class="name">하치와레</div><div class="row"><span>배고픔</span><div class="bar"><i id="b-hhunger" style="background:var(--pink)"></i></div></div><div class="row"><span>기운</span><div class="bar"><i id="b-henergy" style="background:var(--blue)"></i></div></div><div class="row"><span>청결</span><div class="bar"><i id="b-hclean" style="background:var(--green)"></i></div></div><div id="hmood"></div></div><div id="hbub"></div><div id="hflip"><div id="hbody"><img class="f oc" src="img/chara/hachiware-peek.webp" alt="하치와레"><img class="f oo" src="img/chara/hachiware-open.webp" alt=""><img class="f cc" src="img/chara/hachiware-blink.webp" alt=""><img class="f co" src="img/chara/hachiware-blink-open.webp" alt=""></div></div>';
+const hbub=hc.querySelector('#hbub'),hflip=hc.querySelector('#hflip'),hbody=hc.querySelector('#hbody');
+const UA={x:0,y:0,T:null,on:false};let uRun=false;   // 놀러 온 우사기
+const uc=document.createElement('div');uc.id='uc';
+uc.innerHTML='<div id="ustat"><div class="name">우사기</div><div class="row"><span>배고픔</span><div class="bar"><i id="b-uhunger" style="background:var(--pink)"></i></div></div><div class="row"><span>기운</span><div class="bar"><i id="b-uenergy" style="background:var(--blue)"></i></div></div><div class="row"><span>청결</span><div class="bar"><i id="b-uclean" style="background:var(--green)"></i></div></div><div id="umood"></div></div><div id="ubub"></div><div id="uflip"><div id="ubody"><img class="f oc" src="img/chara/usagi-peek.webp" alt="우사기"><img class="f oo" src="img/chara/usagi-open.webp" alt=""></div></div>';
+const ubub=uc.querySelector('#ubub'),uflip=uc.querySelector('#uflip'),ubody=uc.querySelector('#ubody');
+function uPlace(){
+  const sc=scAt(UA.y),sl=UA.x.toFixed(1),st=UA.y.toFixed(1),sw=Math.round(CHAR_W*.98*sc)+'px',sz=Math.round(UA.y);
+  if(sl!==uPlace.l||st!==uPlace.t){uPlace.l=sl;uPlace.t=st;uc.style.transform='translate('+sl+'px,'+st+'px) translate(-50%,-100%)'}
+  if(sw!==uPlace.w){uc.style.width=uPlace.w=sw}
+  if(sz!==uPlace.z){uc.style.zIndex=uPlace.z=sz}
+  return sc;
+}
+function uStep(dt){
+  const sc=uPlace();
+  if(!UA.T)return;
+  const dx=UA.T.x-UA.x,dy=UA.T.y-UA.y,d=Math.hypot(dx,dy),step=WALK_SPEED*(uRun&&ctrlU()?RUN_MULT:1)*sc*dt;
+  if(d<=step){uRun=false;UA.x=UA.T.x;UA.y=UA.T.y;const f=UA.T.done;UA.T=null;ubody.className='';if(f)f()}
+  else{
+    UA.x+=dx/d*step;UA.y+=dy/d*step;
+    if(Math.abs(dx)>6)uflip.style.transform='scaleX('+(dx<0?1:-1)+')';
+    if(ubody.className!=='walk')ubody.className='walk';
+  }
+}
+function scAt(y){const R=ROOMS[curRoom];return clamp((y-R.hor)/(R.ref-R.hor),.4,1.4)}
+function hPlace(){
+  const sc=scAt(HA.y),sl=HA.x.toFixed(1),st=HA.y.toFixed(1),sw=Math.round(CHAR_W*1.04*sc)+'px',sz=Math.round(HA.y);
+  if(sl!==hPlace.l||st!==hPlace.t){hPlace.l=sl;hPlace.t=st;hc.style.transform='translate('+sl+'px,'+st+'px) translate(-50%,-100%)'}
+  if(sw!==hPlace.w){hc.style.width=hPlace.w=sw}
+  if(sz!==hPlace.z){hc.style.zIndex=hPlace.z=sz}
+  return sc;
+}
+function hStep(dt){
+  const sc=hPlace();
+  if(!HA.T)return;
+  const dx=HA.T.x-HA.x,dy=HA.T.y-HA.y,d=Math.hypot(dx,dy),step=WALK_SPEED*(hRun&&ctrlH()?RUN_MULT:1)*sc*dt;
+  if(d<=step){hRun=false;HA.x=HA.T.x;HA.y=HA.T.y;const f=HA.T.done;HA.T=null;hbody.className='';if(f)f()}
+  else{
+    HA.x+=dx/d*step;HA.y+=dy/d*step;
+    if(Math.abs(dx)>6)hflip.style.transform='scaleX('+(dx<0?1:-1)+')';
+    if(hbody.className!=='walk')hbody.className='walk';
+  }
+}
+function loop(ts){
+  const dt=Math.min((ts-last)/1000||0,.05);last=ts;
+  const sc=place();
+  if(HA.on)hStep(dt);
+  if(UA.on)uStep(dt);
+  if(T&&!sleeping){
+    const dx=T.x-P.x,dy=T.y-P.y,d=Math.hypot(dx,dy),step=WALK_SPEED*(running?RUN_MULT:1)*sc*dt;
+    if(d<=step){P.x=T.x;P.y=T.y;T=null;body.classList.remove('walk','run');running=false;if(arrivedSay){say('여기야?');arrivedSay=false}}
+    else{
+      P.x+=dx/d*step;P.y+=dy/d*step;
+      if(Math.abs(dx)>6)flip.style.transform='scaleX('+(dx<0?1:-1)+')';
+      {const want=running?'run':'walk';if(!body.classList.contains(want))body.className=want}
+    }
+  }
+  if(!moving){
+    const fx=focusPt().x,fy=focusPt().y;
+    if(midGo){if(curRoom!==midGo.room)midGo=null;else if(Math.hypot(fx-midGo.x,fy-midGo.y)<30){const g=midGo;midGo=null;g.go()}}
+    if(curRoom==='living'&&fx<=EXIT_L)switchRoom('kitchen',1230,860);
+    else if(curRoom==='kitchen'&&fx>=EXIT_R)switchRoom('living',175,765);
+    else if(curRoom==='living'&&fx>=EXIT_LR)switchRoom('bath',420,930,1);
+    else if(curRoom==='bath'&&fx<=EXIT_BL)switchRoom('living',1240,820,-1);
+    else if(curRoom==='outside'&&fx>=EXIT_OUT)switchRoom('kitchen',330,885,1);
+    else if(curRoom==='lake'&&fy<=FLOOR.y0+4){arrivedSay=false;switchRoom('garden',640,1000,1)}
+    else if(curRoom==='wend'&&fy<=FLOOR.y0+4){arrivedSay=false;switchRoom('hill',850,1020,1)}   // 숲 끝 오른쪽 길 끝까지 가면 언덕 위 둥근 문 집
+    else if(curRoom==='wood'&&fy<=FLOOR.y0+4){arrivedSay=false;switchRoom('wend',820,1020,1)}   // 오솔길 끝까지 가면 갈림길 표지판이 있는 숲 끝
+    else if(curRoom==='cove'&&fy<=FLOOR.y0+4){arrivedSay=false;switchRoom('cend',720,1020,1)}   // 돌계단 길 끝까지 가면 낚시터   // 호숫가 돌길 끝까지 가면 돌담집 정원
+    else if(curRoom==='outside'&&fx<=EXIT_OUT_L&&Math.round(ctrlH()?S.hLove:S.love)<LEFT_NEED){if(ctrlH())hLeftBlock();else leftBlock()}   // 치이카와는 치이카와 호감도, 하치와레는 하치와레 호감도로 따져요
+    else if(curRoom==='outside'&&fx<=EXIT_OUT_L){arrivedSay=false;switchRoom('wood',820,1025,1)}   // 호감도 100 이상이면 맨 왼쪽 길로 들어가요 (치이카와·하치와레 모두)
+  }
+  const c=camTarget(),f=1-Math.exp(-dt*3);
+  camX+=(c.x-camX)*f;camY+=(c.y-camY)*f;
+  if(Math.abs(c.x-camX)<.05)camX=c.x;if(Math.abs(c.y-camY)<.05)camY=c.y;   // 거의 다 왔으면 딱 맞춰서 멈춤 (끝없이 미세하게 움직이지 않게)
+  applyCam();
+  requestAnimationFrame(loop);
+}
+
+// ---- 말풍선/이펙트 ----
+let bt,ti,mt;
+function say(t,ms=2200){
+  stopSing();
+  clearTimeout(bt);clearInterval(ti);clearTimeout(mt);ch.classList.remove('mouth');
+  bub.classList.add('show');
+  const talk=!sleeping;if(talk)ch.classList.add('talking');
+  let i=0;
+  const draw=()=>{bub.innerHTML='<span>'+t.slice(0,i)+'</span><span style="visibility:hidden">'+t.slice(i)+'</span>'};
+  draw();
+  ti=setInterval(()=>{
+    i++;draw();
+    if(talk&&(i===Math.max(2,Math.round(t.length*.4))||i%16===0))blinkNow();
+    ch.classList.toggle('mouth',talk&&/[가-힣a-zA-Z0-9]/.test(t[i-1])&&i%2===1);
+    if(i>=t.length){
+      clearInterval(ti);ch.classList.remove('talking');
+      if(talk){ch.classList.add('mouth');clearTimeout(mt);mt=setTimeout(()=>ch.classList.remove('mouth'),MOUTH_HOLD)}
+      bt=setTimeout(()=>bub.classList.remove('show'),ms);
+    }
+  },75);
+}
+function fx(e){const s=document.createElement('span');s.className='fx';s.textContent=e;s.style.left=(30+Math.random()*40)+'%';ch.appendChild(s);setTimeout(()=>s.remove(),1200)}
+function anim(c,ms){if(sleeping)return;body.className=c;setTimeout(()=>{if(body.className===c&&!T)body.className=''},ms)}
+
+// ---- 눈 깜빡임/웃음 ----
+let smiling=false,bk,sm;
+function blinkNow(ms=160){
+  if(sleeping||smiling||singing)return;
+  ch.classList.add('blink');clearTimeout(bk);
+  bk=setTimeout(()=>{if(!sleeping&&!smiling&&!singing)ch.classList.remove('blink')},ms);
+}
+function smile(ms=1500){
+  if(sleeping)return;
+  smiling=true;ch.classList.add('blink');clearTimeout(sm);
+  sm=setTimeout(()=>{smiling=false;if(!sleeping&&!singing)ch.classList.remove('blink')},ms);
+}
+function blink(){blinkNow();setTimeout(blink,3500+Math.random()*3500)}
+
+// ---- 혼자 노래 부르기: 가끔 혼자 있다가 눈을 감고 입을 뻐끔뻐끔하며 노래해요 ----
+const SING_LOVE=80;   // 호감도가 이 값을 넘어야 노래를 불러요 (화면에 보이는 숫자 기준)
+const SING_MIN=30000,SING_MAX=80000,SING_CHANCE=.6;   // 노래 사이 간격(ms) / 부를 확률. 소리 크기는 SFX.sing 의 vol
+let hSinging=false,hSingSrc=null,hSingIv=null,hSingFx=null,hSingWarm=false;
+let singing=false,singSrc=null,singIv=null,singFx=null,shyT=null,knocking=false,knockTok=0,hEvt=false,hTok=0;   // hEvt=하치와레 등장 연출 중
+function singBase(){return !singing&&!hSinging&&!knocking&&!hEvt&&!sleeping&&!T&&!moving&&!statOn&&!document.hidden&&bgmPlaying()&&SFX.sing.ok}
+function canSing(){   // 혼자 부르는 노래: 말풍선·쓰다듬기·맞는 중에는 안 불러요
+  return Math.round(S.love)>SING_LOVE&&singBase()&&!pet&&
+    !bub.classList.contains('show')&&!ch.classList.contains('hurt1')&&!ch.classList.contains('hurt2')&&!ch.classList.contains('hurt3')&&!ch.classList.contains('talking');
+}
+function canSingPet(){return Math.round(S.love)>=SING_LOVE&&singBase()}   // 쓰다듬어서 부르는 노래: 호감도 80 이상이면 바로
+function duckBgm(v){if(v<.6){BGM.target=2;bgmHelpersOn(bgmStep)}else{BGM.target=0;bgmStep()}}   // 노래할 땐 음악을 약 45%로 줄이고, 끝나면 다시 원래대로
+let singWarm=false;
+function startSing(byPet){
+  if(singWarm)return;
+  if(byPet?!canSingPet():!canSing())return;
+  if(BGM.layers.slice(1).every(a=>!a.paused)){doSing(byPet);return}   // 보조 음악이 이미 켜져 있으면 바로
+  singWarm=true;
+  try{SFX.sing.el.currentTime=0}catch(e){}   // 노래 소리도 미리 맨 앞으로 (재생 직전에 되감지 않게)
+  bgmHelpersOn(()=>setTimeout(()=>{   // 음악 2개가 나오기 시작하고 자리를 잡은 뒤에 노래 시작 → 끊김 방지
+    singWarm=false;bgmSync();
+    if(byPet?canSingPet():canSing())doSing(byPet);else bgmStep();
+  },350));
+}
+function doSing(byPet){
+  if(byPet){clearTimeout(bt);clearInterval(ti);clearTimeout(mt);bub.classList.remove('show');ch.classList.remove('talking','mouth')}   // 하던 말은 접고 노래부터
+  singing=true;singDue=false;
+  const se=SFX.sing.el;try{if(se.currentTime>.05)se.currentTime=0}catch(e){}
+  se.onended=()=>{if(singSrc===se)stopSing()};
+  singSrc=se;fxPlay(se);
+  duckBgm(.45);
+  ch.classList.add('blink','singing');
+  let open=false,lastT=0;
+  singIv=setInterval(()=>{
+    if(sleeping||T||moving){stopSing();return}
+    const want=SING_ENV.charAt(Math.floor((singSrc?singSrc.currentTime:0)*20))==='1';
+    const now=performance.now();
+    if(want!==open&&now-lastT>90){open=want;lastT=now;ch.classList.toggle('mouth',open)}
+  },50);
+  fx('🎵');singFx=setInterval(()=>fx(Math.random()<.5?'🎵':'🎶'),1600);
+}
+function stopSing(){
+  if(!singing)return;singing=false;
+  clearInterval(singIv);clearInterval(singFx);
+  if(singSrc){const s=singSrc;singSrc=null;s.onended=null;try{s.pause();s.currentTime=0}catch(e){}}
+  duckBgm(1);
+  ch.classList.remove('singing','mouth');
+  if(!sleeping&&!smiling)ch.classList.remove('blink');
+}
+function singLoop(){
+  if(Math.random()<SING_CHANCE){
+    if(canSing())startSing();
+    else{setTimeout(singLoop,5000);return}       // 지금은 못 부르면 잠시 뒤 다시
+  }
+  setTimeout(singLoop,SING_MIN+Math.random()*(SING_MAX-SING_MIN));
+}
+setTimeout(singLoop,20000);
+// 호감도가 80을 넘은 순간엔 무조건 한 번 불러요 (말풍선·터치·이동 중이면 끝나길 기다렸다가 바로)
+setInterval(()=>{if(singDue&&canSing())startSing()},1500);
+
+// ---- 행동 ----
+const A={
+  feed(){if(sleeping)return say('쿨쿨…');S.hunger=clamp(S.hunger+28,0,100);S.love=clamp(S.love+1,0,100);say('🍙 냠냠…!');fx('🍙');T=null;anim('eat',2200);smile(1500)},
+  play(){if(sleeping)return say('쿨쿨…');S.energy=clamp(S.energy-8,0,100);S.hunger=clamp(S.hunger-4,0,100);S.love=clamp(S.love+3,0,100);say('신난다!');fx('💗');T=null;anim('happy',1600);smile(1500)},
+  wash(){if(sleeping)return say('쿨쿨…');openWash('c')},
+  sleep(){
+    sleeping=!sleeping;T=null;body.className='';
+    stage.classList.toggle('sleep',sleeping);ch.classList.toggle('blink',sleeping);
+    sleepLabel();
+    say(sleeping?'잘 자… 💤':'으음… 잘 잤다!',2600);
+    tickClock();
+  }
+};
+// 호감도 칸에서 하치와레를 골라 둔 채(놀러 와 있는 동안)로 밥 주기·놀아주기·씻겨주기를 누르면 하치와레한테 해줘요
+function hSleepSet(on){
+  if(on===hSleeping||!HA.on)return;hSleeping=on;
+  hc.classList.toggle('zz',on);
+  if(on){stopHSing();HA.T=null;hRun=false;hbody.className='';hc.classList.add('blink');hSay('쿨쿨… 💤',2600)}
+  else{hc.classList.remove('blink');hSay('으음… 잘 잤다!',2400);hBlink(300)}
+  sleepLabel();
+}
+function uSleepSet(on){
+  if(on===uSleeping||!UA.on)return;uSleeping=on;
+  uc.classList.toggle('zz',on);
+  if(on){UA.T=null;uRun=false;ubody.className='';uSay('쿨쿨… 💤',2600)}
+  else uSay('으음… 잘 잤다! 야하~!',2400);
+  sleepLabel();
+}
+setInterval(()=>{if(hSleeping&&HA.on&&!appAway&&!document.hidden)hFx('💤');if(uSleeping&&UA.on&&!appAway&&!document.hidden)uFx('💤')},2400);
+const AU={   // 호감도 칸에서 우사기를 골라 둔 채(놀러 와 있는 동안)로 밥 주기·놀아주기·씻겨주기를 누르면 우사기한테 해줘요
+  sleep(){uSleepSet(!uSleeping)},
+  feed(){if(uSleeping)return uSay('쿨쿨…',1400);UA.T=null;S.uHunger=clamp(S.uHunger+28,0,100);uSay('🍙 냠냠…!',1600);uFx('🍙');uLoveAdd(1);ubody.className='eat';setTimeout(()=>{if(ubody.className==='eat')ubody.className=''},2200)},
+  play(){if(uSleeping)return uSay('쿨쿨…',1400);UA.T=null;S.uEnergy=clamp(S.uEnergy-8,0,100);S.uHunger=clamp(S.uHunger-4,0,100);uSay('신난다! 야하~!',1600);uFx('💛');uLoveAdd(3);ubody.className='happy';setTimeout(()=>{if(ubody.className==='happy')ubody.className=''},1600)},
+  wash(){if(uSleeping)return uSay('쿨쿨…',1400);UA.T=null;openWash('u')}
+};
+const AH={
+  sleep(){hSleepSet(!hSleeping)},
+  feed(){if(hSleeping)return hSay('쿨쿨…',1400);stopHSing();HA.T=null;S.hHunger=clamp(S.hHunger+28,0,100);hSay('🍙 냠냠…!',1600);hFx('🍙');hLoveAdd(1);hBlink(1800);hbody.className='eat';setTimeout(()=>{if(hbody.className==='eat')hbody.className=''},2200)},
+  play(){if(hSleeping)return hSay('쿨쿨…',1400);stopHSing();HA.T=null;S.hEnergy=clamp(S.hEnergy-8,0,100);S.hHunger=clamp(S.hHunger-4,0,100);hSay('신난다!',1600);hFx('💙');hLoveAdd(3);hBlink(1700);hbody.className='happy';setTimeout(()=>{if(hbody.className==='happy')hbody.className=''},1600)},
+  wash(){if(hSleeping)return hSay('쿨쿨…',1400);stopHSing();HA.T=null;openWash('h')}
+};
+document.querySelectorAll('#menu button').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.a;if(a==='wash'&&OUTDOOR.includes(curRoom)){const m='밖에선 못 씻겨줘~ 집 안에서 씻자!';if(ctrlH())hSay(m,2200);else if(ctrlU())uSay(m,2200);else say(m,2200);return}   // 씻겨주기는 집 안에서만
+  if(ctrlH()&&AH[a])AH[a]();else if(ctrlU()&&AU[a])AU[a]();else A[a]();renderStats();save()}));
+
+let lastTap={t:0,x:0,y:0};
+// ---- 터치: 바닥을 누르면 걸어오고, 캐릭터를 누르면 쓰다듬기 ----
+stage.addEventListener('pointerdown',e=>{
+  knockTok++;knocking=false;   // 터치하면 노크 연출은 접어요
+  if(statOn){showStat(false);pet=null;return}   // 상태창이 떠 있으면 한 번 더 터치해서 닫기
+  if(fEvt||e.target.closest('.ui,#fan,.door,.hot,#tubView,#washView,.ffly,#fishGet,#bookView,#ckV'))return;
+  if(HA.on&&!hEvt&&!hLeaving){   // 놀러 온 하치와레를 눌렀거나 문지르는 중 (치이카와와 겹치면 앞에 있는 쪽)
+    const hr=hc.getBoundingClientRect(),cr=ch.getBoundingClientRect();
+    const onH=e.clientX>=hr.left&&e.clientX<=hr.right&&e.clientY>=hr.top&&e.clientY<=hr.bottom;
+    const onC=e.clientX>=cr.left&&e.clientX<=cr.right&&e.clientY>=cr.top&&e.clientY<=cr.bottom;
+    if(onH&&(!onC||HA.y>=P.y)){hpet={x:e.clientX,y:e.clientY,dist:0,t0:performance.now(),petted:false,long:false};
+      clearTimeout(hlpT);hlpT=setTimeout(()=>{if(hpet&&!hpet.petted&&hpet.dist<14){hpet.long=true;setHud('hachiware');showStat(true,'h');hFx('💙');hbody.className='perk';setTimeout(()=>{if(hbody.className==='perk')hbody.className=''},600)}},500);return}
+  }
+  if(UA.on&&!hEvt&&!uLeaving){   // 놀러 온 우사기를 톡 누르면 반응해요
+    const ur=uc.getBoundingClientRect(),cr=ch.getBoundingClientRect();
+    const onU=e.clientX>=ur.left&&e.clientX<=ur.right&&e.clientY>=ur.top&&e.clientY<=ur.bottom;
+    const onC=e.clientX>=cr.left&&e.clientX<=cr.right&&e.clientY>=cr.top&&e.clientY<=cr.bottom;
+    if(onU&&(!onC||UA.y>=P.y)){
+      uPress={x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY,dist:0,petted:false,t0:performance.now(),long:false};clearTimeout(uLp);
+      uLp=setTimeout(()=>{if(uPress&&!uPress.long&&!uPress.petted&&uPress.dist<14){uPress.long=true;setHud('usagi');showStat(true,'u');uFx('💛');ubody.className='perk';setTimeout(()=>{if(ubody.className==='perk')ubody.className=''},600)}},500);   // 꾹 누르면 호감도창
+      return}
+  }
+  const c=ch.getBoundingClientRect();
+  if(e.clientX>=c.left&&e.clientX<=c.right&&e.clientY>=c.top&&e.clientY<=c.bottom){
+    pet={x:e.clientX,y:e.clientY,dist:0,t0:performance.now(),petted:false,long:false};   // 자는 중에도 꾹 누르면 상태창은 볼 수 있어요 (쓰다듬기·톡 치기는 깨어 있을 때만)
+    clearTimeout(lpT);lpT=setTimeout(()=>{if(pet&&!pet.petted&&pet.dist<14){pet.long=true;setHud('chiikawa');showStat(true)}},500);return;
+  }
+  const r=stage.getBoundingClientRect(),wx=(e.clientX-r.left-camX)/k,wy=(e.clientY-r.top-camY)/k;
+  if(hEvt||wy<(curRoom==='outside'&&wx<690?480:FLOOR.y0-140))return;   // 밖 왼쪽 돌길은 위쪽(y 480~)까지 눌러서 걸어갈 수 있어요
+  const now=performance.now(),dbl=now-lastTap.t<350&&Math.hypot(e.clientX-lastTap.x,e.clientY-lastTap.y)<50;
+  midGo=null;
+  if(DBL_ENTER&&dbl&&!sleeping)for(const k in DEST){const D=DEST[k],a=D.area;if(curRoom===D.room&&wx>=a.x0&&wx<=a.x1&&wy>=a.y0&&wy<=a.y1){lastTap.t=0;goDest(k);return}}   // 가운데 길·마당 쪽 길을 두 번 누르면 빠르게 걸어가서 들어가요
+  if(ctrlH()){   // 하치와레를 움직이는 중이면 하치와레가 걸어가요 (치이카와는 혼자 놀아요)
+    if(hSleeping){hSay('쿨쿨…',1400);return}
+    lastTap={t:dbl?0:now,x:e.clientX,y:e.clientY};
+    HA.T=clampPt(wx,wy);hRun=dbl;return;
+  }
+  if(ctrlU()){   // 우사기를 움직이는 중이면 우사기가 걸어가요
+    if(uSleeping){uSay('쿨쿨…',1400);return}
+    lastTap={t:dbl?0:now,x:e.clientX,y:e.clientY};
+    UA.T=clampPt(wx,wy);uRun=dbl;return;
+  }
+  if(sleeping)return;
+  lastTap={t:dbl?0:now,x:e.clientX,y:e.clientY};
+  goTo(wx,wy);running=dbl;arrivedSay=true;
+});
+
+// ---- 캐릭터 제스처: 문지르면 쓰다듬기(웃음), 톡 한 번 치면 "아야!" ----
+let pet=null,lastPet=0,statOn=false,lpT;
+let statWho='c';
+function showStat(on,who){statOn=on;if(on)statWho=who||'c';ch.classList.toggle('stat',on&&statWho==='c');hc.classList.toggle('stat',on&&statWho==='h');uc.classList.toggle('stat',on&&statWho==='u');renderStats()}
+function overChar(e){const c=ch.getBoundingClientRect();return e.clientX>=c.left&&e.clientX<=c.right&&e.clientY>=c.top&&e.clientY<=c.bottom}
+stage.addEventListener('pointermove',e=>{
+  if(!pet||sleeping)return;
+  pet.dist+=Math.hypot(e.clientX-pet.x,e.clientY-pet.y);pet.x=e.clientX;pet.y=e.clientY;
+  if(pet.dist>40&&overChar(e)){
+    pet.petted=true;
+    const keep=singing&&Math.round(S.love)>=SING_LOVE;   // 호감도 80 이상이고 노래 중이면, 쓰다듬어도 노래는 계속해요
+    if(keep){clearTimeout(hurtT);ch.classList.remove('hurt1','hurt2','hurt3');hits=0}else clearHurt();
+    smile(1400);
+    const now=performance.now();
+    if(now-lastPet>1500){lastPet=now;setHud('chiikawa');S.love=clamp(S.love+2,0,100);fx('💗');if(!keep)say(['에헤헤','좋아~','기분 좋아!'][Math.random()*3|0],1400);renderStats()}
+  }
+});
+let hits=0,hitT,hurtT;
+function hurt(level){ // 1: 눈물 맺힘(한 번 침), 2: 펑펑 욺(두 번 이상), 3: 깜짝 놀람(노래 중에 한 번 침)
+  stopSing();try{SFX.surp.el.onended=null}catch(e){}
+  clearTimeout(hurtT);ch.classList.remove('hurt1','hurt2','hurt3');ch.classList.add('hurt'+level);
+  hurtT=setTimeout(()=>ch.classList.remove('hurt1','hurt2','hurt3'),level===1?1800:level===3?4600:2800);
+}
+function surpEnd(){   // 깜짝이야는 효과음이 끝나는 순간에 그림도 말풍선도 같이 끝나요
+  const se=SFX.surp.el;clearTimeout(hurtT);
+  const done=()=>{se.onended=null;clearTimeout(hurtT);ch.classList.remove('hurt3');clearTimeout(bt);bub.classList.remove('show')};
+  se.onended=done;
+  hurtT=setTimeout(done,(isFinite(se.duration)&&se.duration>0?se.duration*1000:3213)+300);   // 혹시 끝남 신호가 안 오면 대비
+}
+function clearHurt(){stopSing();try{SFX.surp.el.onended=null}catch(e){}clearTimeout(hurtT);ch.classList.remove('hurt1','hurt2','hurt3');hits=0}
+function endGesture(){
+  if(!pet)return;
+  const g=pet;pet=null;clearTimeout(lpT);
+  if(g.petted&&!sleeping&&canSingPet())startSing(true);   // 쓰다듬고 손을 떼면, 호감도 80 이상일 때 기분 좋아서 노래해요
+  if(!g.petted&&!g.long&&g.dist<14&&performance.now()-g.t0<500&&!sleeping){
+    const wasSing=singing;   // 노래 부르던 중이었는지
+    T=null;hits++;clearTimeout(hitT);hitT=setTimeout(()=>hits=0,2500);
+    S.love=clamp(S.love-1,0,100);renderStats();   // 때리면 호감도 -1
+    if(hits===1&&wasSing){stopSing();say('깜짝이야…!',3000);hurt(3);fx('❗');sfxPlay('surp');surpEnd()}
+    else if(hits===1){say('아야!',1500);hurt(1);fx('💫');sfxHit()}
+    else{say('으앙… 시러… 시러…!!',2600);hurt(2);fx('💧');sfxHurt()}
+    anim('ouch',500);
+  }
+}
+stage.addEventListener('pointerup',endGesture);
+stage.addEventListener('pointercancel',()=>{pet=null;clearTimeout(lpT)});
+stage.addEventListener('contextmenu',e=>e.preventDefault());
+
+// ---- 호감도 80~99: 누가 찾아오는 듯한 '똑똑' 노크 소리 (높을수록 더 자주). 100이 되면 손님이 찾아오는 이벤트로 이어질 자리예요 ----
+const KNOCK_LO=80,KNOCK_HI=99;
+const KNOCK_LINES={   // [소리 난 직후 반응, 잠시 뒤 혼잣말] — 누가 오는지는 밝히지 않아요
+  lo:[['…? 방금 소리 났나?','잘못 들었나…?'],['…똑똑? 누구지…?','잘못 들었나…?'],['…? 무슨 소리지?','기분 탓인가…?']],
+  hi:[['…또 소리 난 것 같은데?','누가 오려나…?'],['…누가 왔나…?','잘못 들었나…?'],['…똑똑? 진짜 누구지…?','기분 탓… 아니지?']]
+};
+function canKnock(){
+  const lv=Math.round(S.love),c=ch.classList;
+  return mainRoom()&&lv>=KNOCK_LO&&lv<=KNOCK_HI&&!S.hArrived&&SFX.knockL.ok&&SFX.knockK.ok&&SFX.stepL.ok&&SFX.stepK.ok&&singBase()&&!singDue&&!pet&&
+    !bub.classList.contains('show')&&!c.contains('hurt1')&&!c.contains('hurt2')&&!c.contains('hurt3')&&!c.contains('talking');
+}
+// 95~99엔 발소리도 섞여요: 발소리만 / 노크만 / 발소리 다음에 노크 (점점 가까워지는 느낌)
+const STEP_LINES=[['…? 발소리 같은 게 났는데…?','잘못 들었나…?'],['…누가 걸어오나…?','기분 탓인가…?']];
+const COMBO_LINES=[['…? 점점 가까워지는 것 같아…!','누구세요…? 누구야…?'],['…발소리…? 누가 오는 거야…?','두근두근…']];
+function doKnock(){
+  const tok=++knockTok;knocking=true;
+  const lv=Math.round(S.love),kit=curRoom==='kitchen';
+  const kind=lv>=95?['step','knock','combo'][Math.random()*3|0]:'knock';
+  const step=()=>sfxPlay(kit?'stepK':'stepL'),knock=()=>sfxPlay(kit?'knockK':'knockL');   // 현관이 있는 부엌에선 더 크게, 거실에선 멀리서 들리듯 작게 (음원 파일에 미리 넣어둠)
+  const live=()=>tok===knockTok&&!sleeping&&!moving;
+  const face=()=>{if(!live())return;flip.style.transform='scaleX(1)';anim('perk',500)};   // 소리 난 쪽(왼쪽, 현관 방향)을 보며 쫑긋
+  let ln,tFace,tSay1,tSay2,tEnd;
+  if(kind==='step'){
+    ln=STEP_LINES[Math.random()*STEP_LINES.length|0];step();tFace=500;tSay1=1900;tSay2=5400;tEnd=9000;
+  }else if(kind==='combo'){
+    ln=COMBO_LINES[Math.random()*COMBO_LINES.length|0];step();setTimeout(()=>{if(live())knock()},2000);tFace=2350;tSay1=3700;tSay2=7200;tEnd=10500;
+  }else{
+    const set=KNOCK_LINES[lv>=90?'hi':'lo'];ln=set[Math.random()*set.length|0];knock();tFace=350;tSay1=1700;tSay2=5200;tEnd=9000;
+  }
+  setTimeout(face,tFace);
+  setTimeout(()=>{if(live())say(ln[0],2000)},tSay1);
+  setTimeout(()=>{if(live())say(ln[1],2200)},tSay2);
+  setTimeout(()=>{if(tok===knockTok)knocking=false},tEnd);
+}
+function knockLoop(){
+  const lv=Math.round(S.love);
+  if(lv>=KNOCK_LO&&lv<=KNOCK_HI&&!S.hArrived){
+    if(canKnock())doKnock();else{setTimeout(knockLoop,5000);return}
+  }
+  setTimeout(knockLoop,lv>=90?30000+Math.random()*30000:60000+Math.random()*60000);   // 80대 1~2분, 90대 30~60초
+}
+setTimeout(knockLoop,25000);
+
+// ---- 호감도 100: 하치와레가 현관문으로 빼꼼 찾아와요 (발소리 → 똑똑 → 문틈으로 빼꼼). 한 번 등장하면 hArrived가 켜져서 하치와레 호감도 칸이 열려요 ----
+const hP=$('#hPeek'),hS=$('#hSay');
+function hSayT(t,ms=2400){hS.textContent=t;hS.classList.add('show');clearTimeout(hSayT.t);hSayT.t=setTimeout(()=>hS.classList.remove('show'),ms)}
+function hReset(){hP.classList.remove('on','in','look');hS.classList.remove('show');clearTimeout(hSayT.t)}
+function hCanStart(){
+  const c=ch.classList;
+  const first=!S.hArrived&&Math.round(S.love)>=100;   // 처음엔 호감도 100, 그 뒤로는 시간이 지나면 또 놀러 와요
+  const again=S.hArrived&&!S.hHere&&!HA.on&&((Date.now()>=(S.hNext||0)&&Math.round(S.love)>=80)||(Date.now()<hCallUntil&&Date.now()>=hCallAt));
+  return mainRoom()&&(first||again)&&!hLeaving&&!hEvt&&!knocking&&!singing&&!sleeping&&!moving&&!T&&!statOn&&!pet&&!document.hidden&&bgmPlaying()&&!singDue&&
+    SFX.stepK.ok&&SFX.knockK.ok&&SFX.stepL.ok&&SFX.knockL.ok&&SFX.hCome.ok&&SFX.hLive.ok&&
+    !bub.classList.contains('show')&&!c.contains('hurt1')&&!c.contains('hurt2')&&!c.contains('hurt3')&&!c.contains('talking');
+}
+function hEvent(){
+  const tok=++hTok;hEvt=true;hCallUntil=0;const first=!S.hArrived;
+  const alive=()=>tok===hTok&&!sleeping&&!document.hidden&&!appAway;
+  const quit=()=>{if(tok!==hTok)return;hTok++;hEvt=false;hReset()};   // 도중에 잠들거나 앱을 나가면 접고, 나중에 처음부터 다시 해요
+  const at=(ms,fn)=>setTimeout(()=>{if(tok!==hTok)return;alive()?fn():quit()},ms);
+  const until=(cond,fn,max)=>{const t0=Date.now(),iv=setInterval(()=>{
+    if(tok!==hTok){clearInterval(iv);return}
+    if(!alive()){clearInterval(iv);quit();return}
+    if(cond()||Date.now()-t0>max){clearInterval(iv);fn()}
+  },120)};
+  const kit0=curRoom==='kitchen';
+  // 1) 발소리 → 똑똑 (지금 있는 방에서 들려요: 거실은 멀리서, 부엌은 크게)
+  sfxPlay(kit0?'stepK':'stepL');
+  at(1000,()=>sfxPlay(kit0?'knockK':'knockL'));
+  at(1350,()=>{flip.style.transform='scaleX(1)';anim('perk',500)});
+  at(2300,()=>say(kit0?'…! 누구세요…?':'…! 현관 쪽에서 소리가 났어…!',2200));
+  // 2) 현관문 앞으로 달려가요 (거실에 있었다면 부엌으로 넘어가서)
+  const toDoor=()=>{arrivedSay=false;goTo(450,880);running=true;until(()=>!T,peek,16000)};
+  at(kit0?3600:4200,()=>{
+    if(curRoom==='kitchen'){toDoor();return}
+    switchRoom('kitchen',1230,860);
+    until(()=>curRoom==='kitchen'&&!moving,()=>at(300,toDoor),4000);
+  });
+  // 3) 문 앞에서 또 똑똑 → 문틈으로 빼꼼
+  function peek(){
+    flip.style.transform='scaleX(1)';
+    sfxPlay('knockK');anim('perk',500);
+    at(1700,()=>{hP.classList.add('on');void hP.offsetWidth;hP.classList.add('in');sfxPlay('hCome');hSayT('야~ 나 왔어!',2000)});   // 문틈으로 빼꼼 하면서 "야~ 나 왔어!" (매번)
+    at(2300,()=>{say('…! 하치와레?!',2000);fx('💗');anim('happy',1600);smile(1800)});
+    at(3600,()=>{hP.classList.add('look')});
+    at(6000,()=>say(first?'와~! 들어와 들어와~!':'어서 와~! 들어와~!',2200));
+    at(7300,enter);
+  }
+  // 4) 문틈에서 나와 방 안으로 걸어 들어와요. 이제부터 5~8분 동안 같이 지내요
+  function enter(){
+    hReset();hSpawn(309,700);
+    const tEnter=Date.now();
+    if(first){sfxPlay('hLive');hSay('너 여기서 살아?',1800)}   // 처음 들어올 때만 "너 여기서 살아?"
+    S.hHunger=Math.max(S.hHunger,60);S.hEnergy=Math.max(S.hEnergy,60);S.hClean=Math.max(S.hClean,60);   // 놀러 올 때마다 너무 지친 채로 오지 않게
+    S.hArrived=true;gSignSet();S.hHere=true;S.hStay=H_STAY_MIN+Math.random()*(H_STAY_MAX-H_STAY_MIN);hTick=0;save();renderHud();   // 하치와레 호감도 칸 열림
+    HA.T={x:560,y:880,done:()=>{if(first)setTimeout(()=>{if(HA.on)hSay('와~ 여기가 치이카와 집이구나!',2600)},Math.max(0,2000-(Date.now()-tEnter)))}};
+    hEvt=false;hTok++;
+  }
+}
+
+// ---- 하치와레 호감도 100: 우사기가 현관문으로 빼꼼 찾아와요. 호감도 80부터는 미리 노크/발소리 힌트(하치와레가 집에 있을 때만) ----
+// 필요한 그림: img/chara/usagi-peek.webp (hachiware-peek.webp와 같은 방식의 빼꼼 그림). 없으면 🐰로 대신 나와요
+const U_IMG='img/chara/usagi-peek.webp',U_FALLBACK='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="92" height="160"><text x="46" y="130" font-size="110" text-anchor="middle">🐰</text></svg>');
+function uImg(on){const i=hP.querySelector('img');i.onerror=null;if(on){i.onerror=()=>{i.onerror=null;i.src=U_FALLBACK};i.src=U_IMG}else i.src='img/chara/hachiware-peek.webp'}
+function uReset(){hReset();uImg(false)}
+function uQuiet(){
+  const c=ch.classList;
+  return HA.on&&!HA.T&&!hSinging&&!hpet&&!hLeaving&&!hEvt&&mainRoom()&&!knocking&&!singing&&!sleeping&&!moving&&!T&&!statOn&&!pet&&!document.hidden&&bgmPlaying()&&!singDue&&
+    SFX.stepK.ok&&SFX.knockK.ok&&SFX.stepL.ok&&SFX.knockL.ok&&SFX.uHint.ok&&SFX.uArr.ok&&!bub.classList.contains('show')&&!hbub.classList.contains('show')&&!c.contains('hurt1')&&!c.contains('hurt2')&&!c.contains('hurt3')&&!c.contains('talking');
+}
+function uHint(){   // 발소리·똑똑(두 번)을 먼저 들려주고, 이어서 암시 효과음(audio/usagi-hint-s.mp3)이 나와요
+  const tok=++knockTok;knocking=true;
+  const hi=Math.round(S.hLove)>=95,kit=curRoom==='kitchen',kind=hi?['step','knock','combo'][Math.random()*3|0]:'knock';
+  const step=()=>sfxPlay(kit?'stepK':'stepL'),knock=()=>sfxPlay(kit?'knockK':'knockL');
+  const live=()=>tok===knockTok&&!sleeping&&!moving&&!hEvt;
+  const hl=hi?'누가 오는 것 같은데…?':'어? 또 누가 왔나?',cl=hi?['…누구지…? 두근두근…','…한 명 더 오는 건가…?']:['…? 똑똑 소리 안 났어…?','…누가 또 오나…?'];
+  let hT;   // 암시 효과음이 나오는 시점
+  if(kind==='step'){step();hT=2000}
+  else if(kind==='knock'){knock();setTimeout(()=>{if(live())knock()},450);hT=1900}
+  else{step();setTimeout(()=>{if(live())knock()},2000);setTimeout(()=>{if(live())knock()},2450);hT=3900}
+  setTimeout(()=>{if(live())sfxPlay('uHint')},hT);
+  const tS=hT+900;
+  setTimeout(()=>{if(live()&&HA.on&&!hbub.classList.contains('show'))hSay(hl,2200)},tS);
+  setTimeout(()=>{if(live()&&!bub.classList.contains('show'))say(cl[Math.random()*cl.length|0],2400)},tS+2500);
+  setTimeout(()=>{if(tok===knockTok)knocking=false},tS+6000);
+}
+function uEvent(){
+  const tok=++hTok;hEvt=true;const first=!S.uArrived;
+  const alive=()=>tok===hTok&&!sleeping&&!document.hidden&&!appAway;
+  const quit=()=>{if(tok!==hTok)return;hTok++;hEvt=false;uReset()};   // 도중에 잠들거나 앱을 나가면 접고, 나중에 다시 해요
+  const at=(ms,fn)=>setTimeout(()=>{if(tok!==hTok)return;alive()?fn():quit()},ms);
+  const until=(cond,fn,max)=>{const t0=Date.now(),iv=setInterval(()=>{if(tok!==hTok){clearInterval(iv);return}if(!alive()){clearInterval(iv);quit();return}if(cond()||Date.now()-t0>max){clearInterval(iv);fn()}},120)};
+  const kit0=curRoom==='kitchen',knock=()=>sfxPlay(kit0?'knockK':'knockL');
+  sfxPlay(kit0?'stepK':'stepL');at(1000,knock);at(1450,knock);at(2900,()=>sfxPlay('uHint'));
+  at(1500,()=>{flip.style.transform='scaleX(1)';anim('perk',500);if(HA.on)hSay('어? 누구지…?',1800)});
+  at(3000,()=>say('…! 또 누가 왔나 봐…!',2000));
+  const toDoor=()=>{arrivedSay=false;goTo(450,880);running=true;until(()=>!T,peek,16000)};
+  at(kit0?4000:4600,()=>{
+    if(curRoom==='kitchen'){toDoor();return}
+    switchRoom('kitchen',1230,860);
+    until(()=>curRoom==='kitchen'&&!moving,()=>at(300,toDoor),4000);
+  });
+  function peek(){
+    flip.style.transform='scaleX(1)';uImg(true);
+    sfxPlay('knockK');anim('perk',500);
+    at(1700,()=>{sfxPlay('uArr');hP.classList.add('on');void hP.offsetWidth;hP.classList.add('in')});
+    at(2300,()=>{S.uArrived=true;S.uDue=false;save();say('…! 우사기?!',2000);fx('💗');anim('happy',1600);smile(1800);if(HA.on)hSay('우사기다~!',2000)});
+    at(3600,()=>{hP.classList.add('look');hSayT(first?'야하~! 놀러 왔어!':'야하~! 또 놀러 왔어!',2600)});
+    at(6000,()=>{say(first?'와~! 우사기도 왔다~!':'어서 와~ 우사기~!',2200);if(HA.on)hFx('💙')});
+    at(7300,enter);
+  }
+  // 문틈에서 나와 집 안으로 걸어 들어와요. 1~2분 동안 같이 놀아요
+  function enter(){
+    uReset();uSpawn(309,700);uSay('야하~!',1800);
+    const side=HA.on&&HA.x<P.x?1:-1;
+    UA.T=clampPt(P.x+side*150,P.y);
+    UA.T.done=()=>{
+      setTimeout(()=>{if(HA.on&&!hLeaving)hSay('다 같이 놀자~!',2200)},500);
+      if(first)setTimeout(()=>{if(UA.on&&!uLeaving)uSay('여기가 치이카와 집이야? 야하~!',2600)},1800);
+    };
+    hEvt=false;hTok++;
+  }
+}
+// ---- 놀러 온 우사기: 하치와레처럼 방 안을 돌아다니다가 1~2분 뒤에 돌아가요. 한 번 온 뒤로는 시간이 지나면 일정 확률로 또 놀러 와요 ----
+const U_STAY_MIN=60,U_STAY_MAX=120;      // 머무는 시간(초)
+const U_COOL_MIN=480,U_COOL_MAX=900;     // 돌아간 뒤 다시 올 수 있게 되기까지(초): 8~15분
+const U_CHANCE=.2;                       // 올 수 있는 상태에서 10초마다 놀러 올 확률
+const U_IDLE=['야하~!','같이 놀자~!','후후, 여기 재밌다!','치이카와~ 야하~!','우라~!'];
+let uLeaving=false,uTick=0;
+function uSay(t,ms=2200){
+     clearTimeout(uSay.t);clearTimeout(uSay.m);clearInterval(uSay.i);
+     ubub.textContent=t;ubub.classList.add('show');uc.classList.add('talking');
+     let i=0;uSay.i=setInterval(()=>{i++;
+       uc.classList.toggle('mouth',/[가-힣a-zA-Z0-9]/.test(t[i-1]||'')&&i%2===1);
+       if(i>=t.length){clearInterval(uSay.i);uc.classList.add('mouth');uSay.m=setTimeout(()=>uc.classList.remove('mouth','talking'),MOUTH_HOLD)}},75);
+     uSay.t=setTimeout(()=>ubub.classList.remove('show'),ms);
+   }
+   function uFx(e){const f=document.createElement('span');f.className='fx';f.textContent=e;f.style.left=(30+Math.random()*40)+'%';uc.appendChild(f);setTimeout(()=>f.remove(),1200)}
+function uSpawn(x,y){
+  UA.on=true;UA.x=x;UA.y=y;UA.T=null;ubody.className='';uflip.style.transform='scaleX(1)';
+  uc.style.transition='none';uc.style.opacity='';ubub.classList.remove('show');uc.classList.remove('talking','mouth');
+  ROOMS[curRoom].el.appendChild(uc);uc.classList.add('on');
+  S.uHunger=Math.max(S.uHunger,60);S.uEnergy=Math.max(S.uEnergy,60);S.uClean=Math.max(S.uClean,60);   // 놀러 올 때마다 너무 지친 채로 오지 않게
+  uLeaving=false;S.uStay=U_STAY_MIN+Math.random()*(U_STAY_MAX-U_STAY_MIN);uTick=0;save();
+}
+let uPress=null,uLp,lastUTap=0,lastUPet=0;
+stage.addEventListener('pointermove',e=>{   // 우사기를 쓰다듬으면(문지르면) 호감도가 올라요
+  if(!uPress||!UA.on)return;
+  uPress.dist=(uPress.dist||0)+Math.hypot(e.clientX-uPress.px,e.clientY-uPress.py);uPress.px=e.clientX;uPress.py=e.clientY;
+  if(uPress.dist>40){
+    const r=uc.getBoundingClientRect();
+    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+      if(uSleeping)return;uPress.petted=true;const now=performance.now();
+      if(now-lastUPet>1500){lastUPet=now;setHud('usagi');uLoveAdd(2);uFx('💛');uSay(['에헤헤','좋아~','기분 좋아! 야하~'][Math.random()*3|0],1400);ubody.className='happy';setTimeout(()=>{if(ubody.className==='happy')ubody.className=''},1600)}
+    }
+  }
+});
+stage.addEventListener('pointerup',e=>{
+  if(!uPress)return;const g=uPress;uPress=null;clearTimeout(uLp);
+  if(!g.long&&!g.petted&&Math.hypot(e.clientX-g.x,e.clientY-g.y)<14&&performance.now()-g.t0<500&&UA.on){if(uSleeping)uSay('쿨쿨…',1400);else uTap()}
+});
+stage.addEventListener('pointercancel',()=>{uPress=null;clearTimeout(uLp)});
+function uLoveAdd(n){S.uLove=clamp(S.uLove+n,0,100);renderStats()}
+function uTap(){
+  setHud('usagi');
+  uSay(['야하~!','응? 불렀어?','헤헤'][Math.random()*3|0],1500);
+  ubody.className='perk';setTimeout(()=>{if(ubody.className==='perk')ubody.className=''},600);
+}
+function uGone(){
+  if(statOn&&statWho==='u')showStat(false);
+  uc.style.transition='opacity .5s';uc.style.opacity='0';
+  setTimeout(()=>{uc.classList.remove('on');uc.style.transition='none';uc.style.opacity='';ubub.classList.remove('show');UA.on=false;UA.T=null;uLeaving=false;uSleeping=false;uc.classList.remove('zz');sleepLabel();save()},550);
+}
+function uLeave(){
+  if(uLeaving||!UA.on)return;
+  if(uSleeping){uSleeping=false;uc.classList.remove('zz');sleepLabel()}
+  if(statOn&&statWho==='u')showStat(false);
+  uLeaving=true;S.uStay=0;S.uNext=Date.now()+(U_COOL_MIN+Math.random()*(U_COOL_MAX-U_COOL_MIN))*1000;save();
+  UA.T=null;ubody.className='';uflip.style.transform='scaleX('+(UA.x<P.x?-1:1)+')';
+  uSay('나 이제 갈게~ 또 놀러 올게! 야하~!',3000);
+  setTimeout(()=>{if(sleeping)return;flip.style.transform='scaleX('+(UA.x<P.x?1:-1)+')';say('응! 또 놀러 와~ 잘 가!',2400);anim('happy',1600);smile(1800)},4200);
+  setTimeout(()=>{const e=hExit();sfxPlay(curRoom==='kitchen'?'stepK':'stepL');UA.T={x:e.x,y:e.y,done:uGone}},6600);
+}
+setInterval(()=>{
+  if(!UA.on||hEvt||uLeaving||uSleeping||sleeping||appAway||document.hidden)return;
+  S.uStay=Math.max(0,S.uStay-1);uTick++;
+  if(uTick%15===0)uLoveAdd(1);   // 같이 있는 것만으로도 15초마다 조금씩
+  if(S.uStay<=0){uLeave();return}
+  if(uTick%35===0&&!UA.T&&!ubub.classList.contains('show')&&Math.random()<.6)uSay(U_IDLE[Math.random()*U_IDLE.length|0],2200);
+},1000);
+function uWander(){
+  if(UA.on&&!uSleeping&&!UA.T&&!uLeaving&&!hEvt&&!sleeping&&Math.random()<.75){
+    const wr=ROOMS[curRoom].wander;let tx=clamp(P.x+(Math.random()*560-280),wr[0],wr[1]);
+    if(Math.abs(tx-P.x)<110)tx=clamp(P.x+(tx<P.x?-1:1)*110,wr[0],wr[1]);
+    if(HA.on&&Math.abs(tx-HA.x)<90)tx=clamp(HA.x+(tx<HA.x?-1:1)*100,wr[0],wr[1]);
+    UA.T=clampPt(tx,curRoom==='garden'?Math.max(FLOOR.y0,P.y-(55+Math.random()*50)):P.y+(Math.random()*120-60));
+  }
+  setTimeout(uWander,6000+Math.random()*7000);
+}
+setTimeout(uWander,9000);
+function uCanVisit(){
+  const c=ch.classList;
+  return S.uArrived&&!UA.on&&(Date.now()>=(S.uNext||0)||(Date.now()<uCallUntil&&Date.now()>=uCallAt))&&mainRoom()&&!hEvt&&!hLeaving&&!hSinging&&!hpet&&!(HA.on&&HA.T)&&!knocking&&!singing&&!sleeping&&!moving&&!T&&!statOn&&!pet&&!document.hidden&&bgmPlaying()&&!singDue&&
+    SFX.stepK.ok&&SFX.knockK.ok&&SFX.stepL.ok&&SFX.knockL.ok&&SFX.uHint.ok&&SFX.uArr.ok&&!bub.classList.contains('show')&&!hbub.classList.contains('show')&&!c.contains('hurt1')&&!c.contains('hurt2')&&!c.contains('hurt3')&&!c.contains('talking');
+}
+setInterval(()=>{if(uCanVisit()&&(Math.random()<U_CHANCE||(Date.now()<uCallUntil&&Date.now()>=uCallAt)))uEvent()},10000);   // 우사기가 다시 놀러 오는 순간 (일정 확률)
+let uHintAt=Date.now()+15000;
+setInterval(()=>{
+  if(S.uArrived)return;
+  if(!HA.on){uHintAt=Math.max(uHintAt,Date.now()+15000);return}
+  if(!uQuiet())return;
+  if(S.uDue){uEvent();return}
+  const lv=Math.round(S.hLove);
+  if(lv>=80&&lv<=99&&Date.now()>=uHintAt){uHint();uHintAt=Date.now()+(lv>=90?20000+Math.random()*20000:35000+Math.random()*30000)}
+},1000);
+// ---- 방에 머무는 동안: 돌아다니기 / 쓰다듬기 / 혼잣말 / 호감도 ----
+const H_STAY_MIN=60,H_STAY_MAX=120;     // 머무는 시간(초): 1~2분 (화면을 보고 있는 시간만 세요)
+const H_COOL_MIN=600,H_COOL_MAX=1200;    // 돌아간 뒤 다시 놀러 오기까지(초): 10~20분
+const H_IDLE=['여기 정말 아늑하다~','치이카와, 같이 놀자!','헤헤, 놀러 오길 잘했다!','선풍기 바람 시원해~','집이 참 예쁘다~'];
+let hTick=0,hLeaving=false,hpet=null,lastHPet=0,hlpT;
+function hSpawn(x,y){
+  HA.on=true;HA.x=x;HA.y=y;HA.T=null;hbody.className='';hflip.style.transform='scaleX(1)';
+  hc.style.transition='none';hc.style.opacity='';hbub.classList.remove('show');
+  ROOMS[curRoom].el.appendChild(hc);hc.classList.add('on');
+}
+let hbt,hti,hmt,hk,hUntil=0;
+function hBlink(ms=160){
+  if(hSleeping){hc.classList.add('blink');return}   // 자는 동안엔 눈을 감고 있어요   // 눈 깜빡임 (웃을 땐 더 길게). 짧은 깜빡임이 긴 웃음을 끊지 않아요
+  const u=Date.now()+ms;if(u>hUntil)hUntil=u;hc.classList.add('blink');clearTimeout(hk);
+  hk=setTimeout(()=>{if(Date.now()>=hUntil-5&&!hSleeping)hc.classList.remove('blink')},hUntil-Date.now()+10);
+}
+(function hBlinkLoop(){if(HA.on)hBlink();setTimeout(hBlinkLoop,3500+Math.random()*3500)})();
+function hSay(t,ms=2200){
+  clearTimeout(hbt);clearInterval(hti);clearTimeout(hmt);hbub.classList.add('show');hc.classList.add('talking');
+  let i=0;const draw=()=>{hbub.innerHTML='<span>'+t.slice(0,i)+'</span><span style="visibility:hidden">'+t.slice(i)+'</span>'};
+  draw();hti=setInterval(()=>{i++;draw();
+    hc.classList.toggle('mouth',/[가-힣a-zA-Z0-9]/.test(t[i-1]||'')&&i%2===1);
+    if(i===Math.max(2,Math.round(t.length*.4))||i%16===0)hBlink();
+    if(i>=t.length){clearInterval(hti);hc.classList.add('mouth');hmt=setTimeout(()=>hc.classList.remove('mouth','talking'),MOUTH_HOLD);hbt=setTimeout(()=>hbub.classList.remove('show'),ms)}},75);
+}
+function hFx(e){const f=document.createElement('span');f.className='fx';f.textContent=e;f.style.left=(30+Math.random()*40)+'%';hc.appendChild(f);setTimeout(()=>f.remove(),1200)}
+function hLoveAdd(n){   // 하치와레 호감도: 100이 되면 우사기가 찾아올 차례예요 (uDue)
+  S.hLove=clamp(S.hLove+n,0,100);
+  if(Math.round(S.hLove)>=100&&!S.uArrived){S.uDue=true;if(HA.on&&!hLeaving)S.hStay=Math.max(S.hStay,40)}   // 우사기가 올 때까지 하치와레가 잠깐 더 머물러요
+  renderStats();
+}
+// ---- 하치와레 노래: 호감도 80 이상이면 가끔 혼자, 쓰다듬으면 바로 "예예~ 타파스타!" 하고 불러요 ----
+const HSING_MIN=25000,HSING_MAX=70000,HSING_CHANCE=.6;
+function hSingBase(){return HA.on&&!hSleeping&&!statOn&&!hSinging&&!singing&&!hEvt&&!hLeaving&&!knocking&&!sleeping&&!HA.T&&!appAway&&!document.hidden&&bgmPlaying()&&SFX.hsing.ok&&Math.round(S.hLove)>=SING_LOVE}
+function canHSing(){return hSingBase()&&!hpet&&!hbub.classList.contains('show')}   // 혼자 부를 땐 말풍선·쓰다듬는 중이 아닐 때만
+function startHSing(byPet){
+  if(hSingWarm||singWarm)return;
+  if(byPet?!hSingBase():!canHSing())return;
+  if(BGM.layers.slice(1).every(a=>!a.paused)){doHSing(byPet);return}
+  hSingWarm=true;
+  try{SFX.hsing.el.currentTime=0}catch(e){}
+  bgmHelpersOn(()=>setTimeout(()=>{
+    hSingWarm=false;bgmSync();
+    if(byPet?hSingBase():canHSing())doHSing(byPet);else bgmStep();
+  },350));
+}
+function doHSing(byPet){
+  if(byPet){clearTimeout(hbt);clearInterval(hti);clearTimeout(hmt);hbub.classList.remove('show');hc.classList.remove('talking','mouth')}
+  hSinging=true;hbody.className='';
+  const se=SFX.hsing.el;try{if(se.currentTime>.05)se.currentTime=0}catch(e){}
+  se.onended=()=>{if(hSingSrc===se)stopHSing()};
+  hSingSrc=se;fxPlay(se);
+  duckBgm(.45);
+  hc.classList.add('blink','singing');
+  hbub.innerHTML='<span>'+HSING_TXT+'</span>';hbub.classList.add('show');   // 노래하는 동안 가사 말풍선
+  let open=false,lastT=0;
+  hSingIv=setInterval(()=>{
+    if(!HA.on||sleeping||HA.T||hLeaving||hEvt||appAway||document.hidden){stopHSing();return}
+    const want=HSING_ENV.charAt(Math.floor((hSingSrc?hSingSrc.currentTime:0)*20))==='1';
+    const now=performance.now();
+    if(want!==open&&now-lastT>70){open=want;lastT=now;hc.classList.toggle('mouth',open)}
+  },50);
+  hFx('🎵');hSingFx=setInterval(()=>hFx(Math.random()<.5?'🎵':'🎶'),1100);
+}
+const HSING_TXT='예예~ 타파스타!';
+function stopHSing(){
+  if(!hSinging)return;hSinging=false;
+  if(hbub.textContent===HSING_TXT)hbub.classList.remove('show');
+  clearInterval(hSingIv);clearInterval(hSingFx);
+  if(hSingSrc){const s=hSingSrc;hSingSrc=null;s.onended=null;try{s.pause();s.currentTime=0}catch(e){}}
+  if(!singing)duckBgm(1);
+  hc.classList.remove('singing','mouth');
+  if(Date.now()>=hUntil-5)hc.classList.remove('blink');
+}
+function hSingLoop(){
+  if(Math.random()<HSING_CHANCE){
+    if(canHSing())startHSing();
+    else{setTimeout(hSingLoop,5000);return}
+  }
+  setTimeout(hSingLoop,HSING_MIN+Math.random()*(HSING_MAX-HSING_MIN));
+}
+setTimeout(hSingLoop,25000);
+function hWander(){
+  if(HA.on&&!hSleeping&&!ctrlH()&&!HA.T&&!hEvt&&!hLeaving&&!hpet&&!hSinging&&Math.random()<.7){
+    const wr=ROOMS[curRoom].wander;let tx=clamp(P.x+(Math.random()*700-350),wr[0],wr[1]);
+    if(Math.abs(tx-P.x)<110)tx=clamp(P.x+(tx<P.x?-1:1)*110,wr[0],wr[1]);   // 치이카와 바로 앞은 피해서
+    HA.T=curRoom==='garden'?clampPt(tx,Math.max(FLOOR.y0,P.y-(55+Math.random()*50))):clampPt(tx,P.y+(Math.random()*120-60));   // 정원에선 치이카와보다 살짝 앞(안쪽)에서 걸어요
+  }
+  setTimeout(hWander,6000+Math.random()*7000);
+}
+setTimeout(hWander,8000);
+// ---- 정원: 하치와레는 여기가 자기 집이라는 걸 알고 있어요 ----
+// 1) 간판 앞에서 알아채기  2) 앞장서서 걷기(대문 앞에서 멈춤)  3) 정원 전용 혼잣말  4) 돌아갈 땐 집 현관으로 걸어 들어가기
+const H_HOME_LINES=[
+  ['여기… 왠지 마음이 편해','이 꽃들… 어디서 본 것 같아','바람이 기분 좋아~'],
+  ['어서 와~ 여기 편하다','꽃밭이 오늘도 예쁘네~','치이카와, 천천히 구경해~'],
+  ['여긴 내가 제일 좋아하는 곳이야','우리 집에 온 걸 환영해! 에헤헤','우리 집 정원, 예쁘지?']
+];
+function hHomeLine(){const l=S.hLove,p=l<30?H_HOME_LINES[0]:l<70?H_HOME_LINES[1]:H_HOME_LINES[2];return p[Math.random()*p.length|0]}
+let gTok=0;
+function gardenEnter(){
+  const tok=++gTok;
+  const ok=()=>tok===gTok&&curRoom==='garden'&&!sleeping&&!moving&&!document.hidden;
+  const hOk=()=>ok()&&HA.on&&!hLeaving&&!hEvt;
+  const at=(ms,fn)=>setTimeout(()=>{if(ok())fn()},ms);
+  if(HA.on&&!hLeaving&&!hEvt&&!ctrlH()){
+    // 하치와레가 앞장서서 대문 앞까지 걸어가 잠깐 멈췄다가, 간판 아래까지 가요
+    at(900,()=>{
+      if(!hOk())return;
+      const g=clampPt(600,930);g.done=()=>{
+        setTimeout(()=>{
+          if(!hOk())return;
+          const t=clampPt(610,805);t.done=()=>{
+            const first=!S.hGarden;
+            setTimeout(()=>{
+              if(!hOk())return;
+              hSay(first?'어…? 저 간판… 나 닮았다?':hHomeLine(),2800);
+              if(first){
+                S.hGarden=true;save();
+                setTimeout(()=>{if(hOk())hSay('…여기, 우리 집 같아.',2800)},3600);
+                at(7400,()=>{say('하치와레네 집이었구나~!',2400);fx('💗');anim('happy',1600);smile(1800)});
+              }
+            },700)
+          };
+          HA.T=t
+        },900)
+      };
+      HA.T=g
+    });
+  }else if(!HA.on){
+    // 하치와레가 없을 땐 치이카와가 간판을 보고 한마디 (처음 한 번씩만)
+    if(S.hArrived&&!S.gHint1){S.gHint1=true;save();at(1400,()=>say('여기가 하치와레네 집이구나~',2400))}
+    else if(!S.hArrived&&!S.gHint0){S.gHint0=true;save();at(1400,()=>say('저 간판… 누구 얼굴일까? 동글동글해…',2600))}
+  }
+}
+// 정원 간판 누르기: 하치와레가 오기 전엔 치이카와 힌트, 온 뒤엔 집 현관에서 하치와레가 나와요
+const G_HINTS=['저 간판… 누구 얼굴일까?','동글동글한 얼굴이야… 어디서 봤더라?','그림자만 있어… 궁금해~'];
+let gHintI=0,gCalling=false;
+function gardenCallOut(){
+  if(gCalling)return;gCalling=true;
+  const ok=()=>curRoom==='garden'&&!sleeping&&!document.hidden;
+  const done=()=>{gCalling=false};
+  say('…! 집 안에서 소리가 나!',1800);sfxPlay('knockL');
+  setTimeout(()=>{
+    if(!ok()||HA.on||hEvt){done();return}
+    hSpawn(440,700);flip.style.transform='scaleX(1)';
+    hc.style.opacity='0';void hc.offsetWidth;hc.style.transition='opacity .5s';hc.style.opacity='1';
+    setTimeout(()=>{hc.style.transition='none';hc.style.opacity=''},600);
+    S.hHunger=Math.max(S.hHunger,60);S.hEnergy=Math.max(S.hEnergy,60);S.hClean=Math.max(S.hClean,60);
+    S.hHere=true;S.hStay=H_STAY_MIN+Math.random()*(H_STAY_MAX-H_STAY_MIN);hTick=0;save();renderHud();
+    sfxPlay('stepL');
+    const t=clampPt(610,805);t.done=()=>{
+      done();
+      setTimeout(()=>{if(!(ok()&&HA.on&&!hLeaving))return;hSay('어? 치이카와~! 간판 보고 있었구나!',2600);
+        setTimeout(()=>{if(ok()&&HA.on&&!hLeaving)hSay(hHomeLine(),2600)},3400);
+        setTimeout(()=>{if(ok())say('하치와레~! 어서 와!',2200);fx('💗');anim('happy',1600);smile(1800)},1800)},500)
+    };
+    HA.T=t
+  },1700)
+}
+$('#gSignHot').addEventListener('click',()=>{
+  if(sleeping||moving||hEvt||curRoom!=='garden'||hLeaving||gCalling)return;
+  if(!S.hArrived){say(G_HINTS[gHintI++%G_HINTS.length],2400);return}
+  if(HA.on){if(!ctrlH()&&!HA.T){const t=clampPt(610,805);t.done=()=>hSay(hHomeLine(),2600);HA.T=t}return}
+  gardenCallOut()
+});
+// 돌아갈 땐: "다음 번에 우리 집에도 놀러와~" → 치이카와 인사 → 문 쪽으로 걸어가서 사라져요
+function hExit(){return curRoom==='kitchen'?{x:309,y:700}:curRoom==='outside'?{x:760,y:1040}:curRoom==='lake'?{x:860,y:1035}:curRoom==='garden'?{x:440,y:700}:curRoom==='yard'?{x:700,y:950}:curRoom==='cove'?{x:800,y:1035}:curRoom==='cend'?{x:700,y:1035}:curRoom==='wood'?{x:800,y:1035}:curRoom==='wend'?{x:800,y:1035}:curRoom==='hill'?{x:850,y:1035}:curRoom==='fish'?{x:760,y:525}:curRoom==='bath'?{x:300,y:930}:{x:150,y:765}}
+function hGone(){
+  stopHSing();if(statOn&&statWho==='h')showStat(false);
+  hc.style.transition='opacity .5s';hc.style.opacity='0';
+  setTimeout(()=>{hc.classList.remove('on');hc.style.transition='none';hc.style.opacity='';hbub.classList.remove('show');HA.on=false;HA.T=null;S.hHere=false;hLeaving=false;hSleeping=false;hc.classList.remove('zz','blink');sleepLabel();save()},550);
+}
+function hLeave(){
+  if(hLeaving||!HA.on)return;
+  if(hSleeping){hSleeping=false;hc.classList.remove('zz','blink');sleepLabel()}
+  stopHSing();if(statOn&&statWho==='h')showStat(false);
+  hLeaving=true;setHud('chiikawa');S.hStay=0;S.hNext=Date.now()+(H_COOL_MIN+Math.random()*(H_COOL_MAX-H_COOL_MIN))*1000;save();
+  HA.T=null;hbody.className='';hflip.style.transform='scaleX('+(HA.x<P.x?-1:1)+')';
+  hSay(curRoom==='garden'?'나 이제 집에 들어갈게~ 또 놀러 와!':'다음 번에 우리 집에도 놀러와~',3400);
+  setTimeout(()=>{if(sleeping)return;flip.style.transform='scaleX('+(HA.x<P.x?1:-1)+')';say(curRoom==='garden'?'응! 잘 쉬어~ 또 놀자!':'응! 꼭 놀러 갈게~ 잘 가!',2400);anim('happy',1600);smile(1800)},4900);   // 하치와레 말풍선이 사라진 뒤에 대답해서 겹치지 않아요
+  setTimeout(()=>{const e=hExit();sfxPlay(curRoom==='kitchen'?'stepK':'stepL');HA.T={x:e.x,y:e.y,done:hGone}},7600);
+}
+setInterval(()=>{
+  if(!HA.on||hEvt||hLeaving||hSleeping||sleeping||appAway||document.hidden)return;
+  S.hStay=Math.max(0,S.hStay-1);hTick++;
+  if(hTick%15===0)hLoveAdd(1);   // 같이 있는 것만으로도 15초마다 조금씩
+  if(S.hStay<=0){hLeave();return}
+  if(hTick%40===0&&!hSinging&&!HA.T&&!hpet&&!hbub.classList.contains('show')&&Math.random()<.6)hSay(curRoom==='garden'?hHomeLine():H_IDLE[Math.random()*H_IDLE.length|0],2400);
+},1000);
+stage.addEventListener('pointermove',e=>{
+  if(!hpet||!HA.on)return;
+  hpet.dist+=Math.hypot(e.clientX-hpet.x,e.clientY-hpet.y);hpet.x=e.clientX;hpet.y=e.clientY;
+  if(hpet.dist>40){
+    const r=hc.getBoundingClientRect();
+    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+      if(hSleeping)return;hpet.petted=true;const now=performance.now();
+      if(now-lastHPet>1500){lastHPet=now;setHud('hachiware');hLoveAdd(2);hFx('💙');if(!hSinging)hSay(['에헤헤','좋아~','기분 좋아!'][Math.random()*3|0],1400);hBlink(1600);if(!hSinging)hbody.className='happy';setTimeout(()=>{if(hbody.className==='happy')hbody.className=''},1600)}
+    }
+  }
+});
+stage.addEventListener('pointerup',()=>{
+  if(!hpet)return;const g=hpet;hpet=null;clearTimeout(hlpT);
+  if(g.petted&&HA.on&&hSingBase())startHSing(true);   // 쓰다듬고 손을 떼면, 호감도 80 이상일 때 기분 좋아서 노래해요
+  if(!g.petted&&!g.long&&g.dist<14&&performance.now()-g.t0<500&&HA.on){   // 톡 누르면 반응만 해요 (손님이라 때리지 않아요)
+    setHud('hachiware');if(hSleeping)hSay('쿨쿨…',1400);else if(!hSinging){hSay(['응? 불렀어?','왜~?','헤헤'][Math.random()*3|0],1500);hbody.className='perk'}setTimeout(()=>{if(hbody.className==='perk')hbody.className=''},600);
+  }
+});
+stage.addEventListener('pointercancel',()=>{hpet=null;clearTimeout(hlpT)});
+// 놀러 온 채로 앱을 다시 켰다면 이어서 머물러요 (이미 갈 시간이 지났으면 조용히 돌아간 걸로)
+if(S.hHere){S.hStay=Math.min(S.hStay,H_STAY_MAX);if(S.hStay>0){const p0=clampPt(P.x-130,P.y);hSpawn(p0.x,p0.y)}else S.hHere=false}
+setInterval(()=>{if(hCanStart())hEvent()},250);
+
+// ---- 혼자 돌아다니기 (차분하게) ----
+function wander(){
+  if(!T&&!sleeping&&!singing&&!knocking&&!hEvt&&Math.random()<.65){arrivedSay=false;{const wr=ROOMS[curRoom].wander;goTo(clamp(P.x+(Math.random()*640-320),wr[0],wr[1]),wY(P.y+(Math.random()*100-50)))}}
+  setTimeout(wander,WANDER_MIN+Math.random()*(WANDER_MAX-WANDER_MIN));
+}
+
+// ---- 시간 흐름 ----
+setInterval(()=>{decay(10/60);if(UA.on&&!hEvt){const m=10/60;S.uHunger=clamp(S.uHunger-1.2*m,0,100);S.uClean=clamp(S.uClean-.8*m,0,100);if(!sleeping&&!uSleeping)S.uEnergy=clamp(S.uEnergy-.6*m,0,100)}if(HA.on&&!hEvt){const m=10/60;S.hHunger=clamp(S.hHunger-1.2*m,0,100);S.hClean=clamp(S.hClean-.8*m,0,100);if(!sleeping&&!hSleeping)S.hEnergy=clamp(S.hEnergy-.6*m,0,100)}if(hSleeping&&HA.on){S.hEnergy=clamp(S.hEnergy+1.5,0,100);if(S.hEnergy>=100)hSleepSet(false)}if(uSleeping&&UA.on){S.uEnergy=clamp(S.uEnergy+1.5,0,100);if(S.uEnergy>=100)uSleepSet(false)}if(sleeping){S.energy=clamp(S.energy+1.5,0,100);if(S.energy>=100)A.sleep()}renderStats();save()},10000);
+setInterval(tickClock,30000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+
+// ---- 방 이동: 끝까지 걸어가면 부드럽게 화면 전환 ----
+// 정원 간판: 하치와레가 오기 전엔 그림자만, 온 뒤엔 얼굴이 보여요
+function gSignSet(){const a=S.hArrived,e=$('#gSign'),o=$('#oSign'),f=$('#fSign');if(f)f.src=a?'img/signs/fsign-face.webp':'img/signs/fsign-sil.webp';if(e)e.src=a?'img/signs/sign-face.webp':'img/signs/sign-sil.webp';if(o)o.src=a?'img/signs/osign-face.webp':'img/signs/osign-sil.webp'}
+function switchRoom(to,sx,sy,d){
+  if(d==null)d=to==='kitchen'?-1:1;   // d: 같이 온 하치와레가 서는 쪽(-1 왼쪽/1 오른쪽). 바라보는 방향도 이걸로 정해요
+  if(moving)return;
+  moving=true;T=null;midGo=null;onArrive=null;$('#fade').classList.add('on');
+  setTimeout(()=>{
+    const r=ROOMS[to];
+    curRoom=to;curWorld=r.el;IW=r.w;IH=r.h;FLOOR=r.floor;CHAR_W=r.charW;
+    for(const key in ROOMS)ROOMS[key].el.style.display=key===to?'block':'none';
+    r.el.appendChild(ch);$('#lakeBack').classList.toggle('on',to==='lake'||to==='yard'||to==='garden'||to==='cove'||to==='cend'||to==='wood'||to==='wend'||to==='hill'||to==='fish');$('#homeBtn').classList.toggle('on',OUTDOOR.includes(to));$('#outBtn').classList.toggle('on',!OUTDOOR.includes(to));{const wb=document.querySelector('#menu [data-a="wash"]');if(wb)wb.classList.toggle('off',OUTDOOR.includes(to))}
+    const hCtl=ctrlH(),uCtl=ctrlU();   // 하치와레·우사기를 움직이는 중이면 치이카와가 따라 들어와요
+    if(hCtl||uCtl){const cp=clampPt(sx+d*110,sy);P.x=cp.x;P.y=cp.y}else{P.x=sx;P.y=sy}
+    body.className='';flip.style.transform='scaleX('+(d<0?1:-1)+')';
+    if(HA.on){r.el.appendChild(hc);const hp=hCtl?{x:sx,y:sy}:clampPt(sx+d*(uCtl?-110:110),sy);HA.x=hp.x;HA.y=hp.y;HA.T=null;hflip.style.transform='scaleX('+(d<0?1:-1)+')';hbody.className='';if(hLeaving){const e=hExit();if(S.hStay<=0&&hbub.classList.contains('show')===false)HA.T={x:e.x,y:e.y,done:hGone}}}
+    if(UA.on){r.el.appendChild(uc);const up=uCtl?{x:sx,y:sy}:clampPt(sx-d*170,sy);UA.x=up.x;UA.y=up.y;UA.T=null;uflip.style.transform='scaleX('+(d<0?1:-1)+')';ubody.className='';if(uLeaving&&S.uStay<=0){const e=hExit();UA.T={x:e.x,y:e.y,done:uGone}}}   // 우사기도 같이 따라 들어와요
+    if(statOn)showStat(false);bub.classList.remove('show');
+    if(to==='garden'||to==='outside'||to==='wood')gSignSet();
+    if(to==='garden')setTimeout(gardenEnter,500);else gTok++;
+    if(to==='fish')fishPreload();
+    fit();place();
+    setTimeout(()=>{$('#fade').classList.remove('on');moving=false},160);
+  },430);
+}
+$('#doorL').addEventListener('click',()=>{if(!sleeping&&!moving&&!hEvt&&curRoom==='living'){arrivedSay=false;switchRoom('kitchen',1230,860)}});
+$('#doorB').addEventListener('click',()=>{if(!sleeping&&!moving&&!hEvt&&curRoom==='living'){arrivedSay=false;switchRoom('bath',420,930,1)}});
+$('#doorOut').addEventListener('click',()=>{if(!sleeping&&!moving&&!hEvt&&curRoom==='kitchen'){arrivedSay=false;switchRoom('outside',1330,830,-1)}});
+const OUTDOOR=['outside','lake','garden','cove','cend','yard','wood','wend','hill','fish'];   // 집 밖 장면들: 어디서든 🏠 버튼이 떠 있어요
+$('#outBtn').addEventListener('click',()=>{   // 🌿 집 안 어디서든 눌러서 집 앞 갈림길로 나가요
+  if(sleeping||moving||hEvt||OUTDOOR.includes(curRoom))return;
+  arrivedSay=false;switchRoom('outside',1330,830,-1);
+});
+$('#homeBtn').addEventListener('click',()=>{   // 🏠 집 바로가기: 어느 밖 장면에서든 눌러서 집으로 들어가요
+  if(sleeping||moving||hEvt||!OUTDOOR.includes(curRoom))return;
+  arrivedSay=false;
+  if(curRoom==='yard')switchRoom('living',1100,800,-1);   // 마당은 거실 문 밖이라 거실로
+  else switchRoom('kitchen',330,885,1);                   // 나머지는 현관(주방)으로
+});
+$('#doorIn').addEventListener('click',()=>{if(!sleeping&&!moving&&!hEvt&&curRoom==='outside'){arrivedSay=false;switchRoom('kitchen',330,885,1)}});
+$('#doorMid').addEventListener('click',()=>goNow('lake'));
+$('#doorLeft').addEventListener('click',()=>{   // 왼쪽 길: 움직이는 캐릭터(치이카와/하치와레)의 호감도가 100 전에는 막히고, 100 이상이면 바로 숲 오솔길로 넘어가요
+  if(sleeping||moving||hEvt||curRoom!=='outside')return;
+  if(Math.round(ctrlH()?S.hLove:S.love)<LEFT_NEED){if(ctrlH())hLeftBlock();else leftBlock();return}
+  midGo=null;arrivedSay=false;switchRoom('wood',820,1025,1)
+});   // 걸어가지 않고 바로 넘어가요
+$('#doorYard').addEventListener('click',()=>goDest('yard'));   // 발자국 버튼: 한 번 누르면 가운데 길까지 빠르게 걸어가서 들어가요
+$('#lakeBack').addEventListener('click',()=>{if(sleeping||moving||hEvt)return;arrivedSay=false;if(curRoom==='lake')switchRoom('outside',850,860,-1);else if(curRoom==='garden')switchRoom('lake',775,805,-1);else if(curRoom==='yard')switchRoom('living',1100,800,-1);else if(curRoom==='cove')switchRoom('outside',1250,850,-1);else if(curRoom==='cend')switchRoom('cove',1040,860,-1);else if(curRoom==='wood')switchRoom('outside',810,880,-1);else if(curRoom==='wend')switchRoom('wood',580,670,-1);else if(curRoom==='hill')switchRoom('wend',1190,665,-1);else if(curRoom==='fish')switchRoom('cend',915,695,-1)});
+$('#doorGarden').addEventListener('click',()=>goDest('garden'));
+$('#doorRight').addEventListener('click',()=>goNow('cove'));   // 오른쪽 길: 바로 넘어가요 (가운데 길 버튼과 같아요)
+$('#doorCend').addEventListener('click',()=>goDest('cend'));
+$('#doorWend').addEventListener('click',()=>goDest('wend'));
+$('#doorHill').addEventListener('click',()=>goDest('hill'));
+$('#doorFish').addEventListener('click',()=>goDest('fish'));
+// ---- 첫 낚시: 처음 낚는 건 무조건 도감! (낚시 -> "꽤 무거워" -> 페이드 -> 바다 위 도감 -> 호감도 + 도감 아이콘) ----
+let fEvt=false,fTok=0;
+const FSPOT={x:720,y:565};   // 부두 끝에 서서 낚싯대를 던져요
+const fPose=$('#fPose'),fLine=$('#fLine'),fFloat=$('#fFloat'),fBub=$('#fBub');
+let fbT;
+function fbSay(t,ms){fBub.textContent=t;fBub.classList.add('show');clearTimeout(fbT);fbT=setTimeout(()=>fBub.classList.remove('show'),ms)}
+const waitMs=ms=>new Promise(r=>setTimeout(r,ms));
+function fishPreload(){if(fishPreload.d)return;fishPreload.d=1;['img/minigame/fishing/fish-pose.webp','img/minigame/fishing/fish-get.webp','img/minigame/dex/book-icon.webp'].forEach(u=>{const i=new Image();i.src=u})}
+function bookPreload(){if(bookPreload.d)return;bookPreload.d=1;['img/minigame/dex/book-cover.webp','img/minigame/dex/book-open-fx.webp','img/minigame/dex/book-flip1.webp','img/minigame/dex/book-flip2.webp','img/minigame/dex/book-flip3.webp','img/minigame/dex/book-flip4.webp','img/minigame/dex/book-flip5.webp'].forEach(u=>{const i=new Image();i.src=u})}
+function fishReset(){fPose.className='';fLine.className='';fFloat.className='';fBub.classList.remove('show');ch.style.opacity=''}
+function fishEnd(){fishReset();fEvt=false;hEvt=false;stage.classList.remove('fev')}
+function fishStart(){
+  if(fEvt||sleeping||moving||hEvt||curRoom!=='fish')return;
+  if(hudWho!=='chiikawa')setHud('chiikawa');   // 낚시는 치이카와가 해요
+  fEvt=true;hEvt=true;stage.classList.add('fev');arrivedSay=false;
+  const tok=++fTok,first=!S.gotBook,sp=clampPt(FSPOT.x,FSPOT.y);
+  goTo(sp.x,sp.y);running=false;
+  const t0=Date.now(),iv=setInterval(()=>{
+    if(tok!==fTok){clearInterval(iv);return}
+    if(!T||Date.now()-t0>9000){clearInterval(iv);fishCast(tok,first)}
+  },100);
+}
+let fRig={h:180};
+function fishRig(){   // 낚싯대 든 그림을 지금 치이카와 크기·위치에 맞춰요 (몸 너비 약 300px, 발 위치 (400,445) 기준)
+  const s=(ch.offsetWidth||108)/300,fx=P.x,fy=P.y,hx=fx-347*s,hy=fy-95*s,wy=fy+150;
+  const ps=fPose.style;ps.width=(560*s)+'px';ps.height=(484*s)+'px';ps.left=(fx-400*s)+'px';ps.top=(fy-445*s)+'px';ps.transformOrigin=(400*s)+'px '+(445*s)+'px';
+  fLine.style.left=hx+'px';fLine.style.top=hy+'px';fRig.h=wy-hy;fLine.style.height=fRig.h+'px';
+  fFloat.style.left=(hx+1)+'px';fFloat.style.top=wy+'px';
+  fBub.style.left=fx+'px';fBub.style.top=(fy-445*s-6)+'px';
+}
+async function fishCast(tok,first){
+  const ok=()=>tok===fTok;
+  fishRig();ch.style.opacity='0';
+  fPose.className='on';fLine.className='on';
+  fbSay('낚시 시작~!',1600);
+  await waitMs(550);if(!ok())return;
+  fFloat.className='on drop';
+  await waitMs(2300);if(!ok())return;
+  fFloat.classList.add('nib');fbSay('…!?',1200);
+  await waitMs(1900);if(!ok())return;
+  fFloat.className='on';
+  if(first){
+    fFloat.className='on pull';fLine.classList.add('pull');fLine.style.height=(fRig.h+20)+'px';fPose.className='on heavy';
+    fbSay('이건 뭐지...? 꽤 무거워...!',3000);
+    await waitMs(3300);if(!ok())return;
+    fishGetBook();
+  }else{
+    fishCatch()
+    await waitMs(2400);if(!ok())return;
+    fishEnd();
+  }
+}
+let fgReady=false;
+function fishGetBook(){
+  const v=$('#fishGet'),tx=$('#fgText'),rw=$('#fgRewards'),hint=$('#fgHint');
+  tx.textContent='';rw.classList.remove('on');hint.classList.remove('on');fgReady=false;
+  v.classList.add('on');void v.offsetWidth;v.classList.add('show');   // 페이드로 바다 위 도감 화면
+  setTimeout(fishReset,900);   // 화면이 다 덮인 뒤에 낚시 장면은 정리해요
+  const msg='우와! 도감을 얻었어!';let i=0;
+  setTimeout(()=>{const iv=setInterval(()=>{i++;tx.textContent=msg.slice(0,i);if(i>=msg.length){clearInterval(iv);fishGetReward()}},75)},1300);
+}
+function fishGetReward(){
+  const rw=$('#fgRewards');
+  if(!S.gotBook){S.love=clamp(S.love+5,0,100);S.gotBook=true;renderStats();save()}   // 호감도 + 도감 획득 (한 번만)
+  rw.classList.add('on');
+  setTimeout(()=>{$('#fgHint').classList.add('on');fgReady=true},1400);
+}
+$('#fishGet').addEventListener('click',()=>{
+  if(!fgReady)return;fgReady=false;
+  const v=$('#fishGet');v.classList.remove('show');
+  setTimeout(()=>{v.classList.remove('on');fishEnd();renderBookBtn(true);setTimeout(()=>{say('도감이다…! 소중히 쓸게!',2600)},500)},850);
+});
+function renderBookBtn(pop){
+  const b=$('#bookBtn');b.classList.toggle('on',!!S.gotBook);
+  if(pop&&S.gotBook){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),900)}
+  if(S.gotBook)setTimeout(bookPreload,3500);
+}
+$('#castBtn').addEventListener('click',fishStart);
+
+// ---- 도감: 아이콘을 누르면 표지가 열리고, 넘기면 페이지가 넘어가요 ----
+const BKN=4,BK_W=1509,BK_H=1282,BK_TOP=240;   // 장 수 / 도감 그림 칸(가로·세로) / 위로 넘어가는 페이지 여유
+const BK_BOX={open:[0,0,1509,1042],cover:[404,10,700,945],f:[[66,57,1378,996],[66,-113,1348,1170],[66,-230,1308,1282],[66,-169,1452,1237],[66,51,1368,1008]]};
+let bkOn=false,bkBusy=false,bkPage=0,bkX=null,bkY=0,bkTapOK=false,bkZ=null;   // bkZ: 확대 중인 쪽('L' 왼쪽 / 'R' 오른쪽 / null 전체)
+const bkV=$('#bookView'),bkS=$('#bkStage'),bkC=$('#bkCover'),bkO=$('#bkOpen'),bkF=[...document.querySelectorAll('.bkf')];
+function bkPlace(el,b){el.style.left=(b[0]/BK_W*100)+'%';el.style.top=((b[1]+BK_TOP)/BK_H*100)+'%';el.style.width=(b[2]/BK_W*100)+'%';el.style.height=(b[3]/BK_H*100)+'%'}
+bkPlace(bkO,BK_BOX.open);bkPlace($('#bkFish'),BK_BOX.open);bkPlace(bkC,BK_BOX.cover);bkF.forEach((f,i)=>bkPlace(f,BK_BOX.f[i]));
+function bkFit(){const w=$('#bkWrap'),W0=w.clientWidth,H0=w.clientHeight-8,s=Math.min(W0/BK_W,H0/BK_H);bkS.style.width=Math.floor(BK_W*s)+'px';bkS.style.height=Math.floor(BK_H*s)+'px';$('#bkRot').classList.toggle('on',innerHeight>innerWidth);bkZoomApply()}
+function bkLabel(){$('#bkPage').textContent=(bkPage+1)+' / '+BKN;$('#bkPrev').disabled=bkPage<=0;$('#bkNext').disabled=bkPage>=BKN-1}
+// 왼쪽 페이지를 누르면 왼쪽이, 오른쪽 페이지를 누르면 오른쪽이 크게 보여요. 한 번 더 누르면 원래대로 돌아와요
+function bkZoomApply(){
+  const s=bkS.style;
+  if(!bkZ){s.setProperty('--bkz',1);s.setProperty('--bkdx','0px');s.setProperty('--bkdy','0px');return}
+  const w=$('#bkWrap'),W0=w.clientWidth,H0=w.clientHeight-8,sw=bkS.clientWidth,sh=bkS.clientHeight,sc=sw/BK_W;
+  const cx=(bkZ==='L'?455:1078)*sc,cy=(BK_TOP+494)*sc;   // 펼친 도감 그림에서 왼쪽/오른쪽 페이지의 가운데
+  const z=clamp(Math.min(W0*.96/(640*sc),H0*.96/(860*sc)),1.15,3);
+  s.setProperty('--bkz',z.toFixed(3));s.setProperty('--bkdx',(-(cx-sw/2)*z).toFixed(1)+'px');s.setProperty('--bkdy',(-(cy-sh/2)*z).toFixed(1)+'px');
+}
+function bkZoom(side){
+  bkZ=side;const w=$('#bkWrap');
+  if(side){w.classList.add('zm')}else setTimeout(()=>{if(!bkZ)w.classList.remove('zm')},380);
+  bkZoomApply();
+}
+function bkTap(e){
+  if(!bkOn||bkBusy||!bkO.classList.contains('rdy'))return;
+  if(bkZ){bkZoom(null);return}
+  const r=bkS.getBoundingClientRect(),nx=(e.clientX-r.left)/r.width*BK_W,ny=(e.clientY-r.top)/r.height*BK_H-BK_TOP;
+  if(nx<110||nx>1400||ny<60||ny>930)return;   // 도감 바깥을 누른 건 무시
+  bkZoom(nx<BK_W*.497?'L':'R');
+}
+function bookOpen(){
+  if(bkOn||fEvt)return;
+  bkOn=true;bkBusy=true;bkPage=0;bkZ=null;$('#bkWrap').classList.remove('zm');bkZoomApply();bookPreload();
+  bkC.className='';bkO.className='';bkF.forEach(f=>f.style.opacity=0);bkLabel();
+  bkV.classList.add('on');bkFit();void bkV.offsetWidth;bkV.classList.add('show');
+  setTimeout(()=>{bkC.classList.add('in')},120);
+  setTimeout(()=>{bkC.classList.add('open');bkO.classList.add('in')},950);   // 표지가 열리면서 펼친 도감이 나와요
+  setTimeout(()=>{bkO.classList.add('rdy');bkFishShow();$('#bkBar').classList.add('on');$('#bkClose').classList.add('on');bkBusy=false},1800);
+}
+function bookClose(){
+  if(!bkOn||(bkBusy&&!bkO.classList.contains('rdy')))return;
+  bkOn=false;bkZ=null;bkZoomApply();$('#bkWrap').classList.remove('zm');bkFishHide();bkV.classList.remove('show');$('#bkBar').classList.remove('on');$('#bkClose').classList.remove('on');
+  setTimeout(()=>{if(!bkOn){bkV.classList.remove('on');bkC.className='';bkO.className=''}},450);
+}
+const FISH=['뽀글이','꼬리콩','꼬리롱','무지개','줄무늬','봉방이','배시','빙글이','메롱이','동글이','점박이','왕눈이','보글이','찰랑이','버들이','송송이','피리미','봉봉이','미꾸리','반짝이'];
+const FSL=[[340,315],[335,520],[335,740],[920,298],[928,525],[935,735]],FTB=[[322,236],[318,441],[318,658],[895,206],[905,436],[910,656]];
+function bkFishShow(){
+  const b=$('#bkFish'),f=S.fish||{};let h='';
+  for(let i=0;i<6;i++){const k=bkPage*6+i;if(k>=FISH.length)break;const on=!!f[k];
+    h+=`<div class="t" style="left:${FTB[i][0]/15.09}%;top:${FTB[i][1]/10.42}%">${on?FISH[k]:'？？？'}</div>`;
+    const u=`img/minigame/fishing/fishd-${String(k+1).padStart(2,'0')}.webp`,pos=`left:${FSL[i][0]/15.09}%;top:${FSL[i][1]/10.42}%`;
+    h+=on?`<div class="f" style="${pos}"><img src="${u}" alt=""></div>`:`<div class="f" style="${pos}"><i class="sh" style="-webkit-mask-image:url(${u});mask-image:url(${u})"></i></div>`}
+  b.style.setProperty('--bkfs',Math.max(9,bkS.clientWidth*.0125)+'px');
+  b.innerHTML=h;b.classList.add('on');
+}
+function bkFishHide(){$('#bkFish').classList.remove('on')}
+function fishCatch(){
+  const k=Math.random()*FISH.length|0;S.fish=S.fish||{};const isNew=!S.fish[k];S.fish[k]=(S.fish[k]||0)+1;
+  gainIng('fish');if(isNew)S.love=clamp(S.love+1,0,100);renderStats();save();
+  const n=String(k+1).padStart(2,'0'),c=$('#catchPop');
+  c.innerHTML=`<img src="img/minigame/fishing/fishc-${n}.webp" alt=""><span class="n">${FISH[k]}</span>`+(isNew?'<span class="s">✨ 도감에 등록했어요!</span>':'<span class="s">🐟 요리 재료로 보관했어요</span>');
+  fbSay('낚았다! '+FISH[k]+'~!',2000);c.classList.add('on');setTimeout(()=>c.classList.remove('on'),2300);
+}
+function bkFlip(dir){   // dir: 1 다음 장 / -1 이전 장 (넘김 그림 5장을 차례로 위에 덮어서 보여줘요)
+  if(!bkOn||bkBusy)return;const to=bkPage+dir;if(to<0||to>=BKN)return;
+  if(bkZ)bkZoom(null);bkFishHide();bkBusy=true;const seq=dir>0?[0,1,2,3,4]:[4,3,2,1,0];
+  const fin=f=>{f.style.transition='opacity .09s linear';f.style.opacity=1},fout=f=>{f.style.transition='none';f.style.opacity=0};
+  fin(bkF[seq[0]]);
+  setTimeout(()=>{bkO.style.transition='none';bkO.style.opacity=0},100);   // 첫 장이 다 덮은 뒤에 기본 그림을 숨겨요
+  let i=0;const iv=setInterval(()=>{
+    i++;
+    if(i>=seq.length){
+      clearInterval(iv);bkPage=to;bkLabel();setTimeout(bkFishShow,200);
+      bkO.style.opacity=1;   // 마지막 장 밑에 펼친 그림을 깔고, 마지막 장을 스르륵 걷어요
+      setTimeout(()=>{const f=bkF[seq[seq.length-1]];f.style.transition='opacity .16s linear';f.style.opacity=0;setTimeout(()=>{bkO.style.transition='';bkO.style.opacity='';bkBusy=false},190)},60);
+      return;
+    }
+    fin(bkF[seq[i]]);const prev=bkF[seq[i-1]];setTimeout(()=>fout(prev),100);
+  },95);
+}
+$('#bookBtn').addEventListener('click',bookOpen);
+$('#bkClose').addEventListener('click',bookClose);
+$('#bkPrev').addEventListener('click',()=>bkFlip(-1));
+$('#bkNext').addEventListener('click',()=>bkFlip(1));
+bkV.addEventListener('pointerdown',e=>{bkX=e.clientX;bkY=e.clientY;bkTapOK=!e.target.closest('#bkBar,#bkClose')});
+bkV.addEventListener('pointerup',e=>{if(bkX==null)return;const dx=e.clientX-bkX,dy=e.clientY-bkY;bkX=null;if(Math.abs(dx)>45)bkFlip(dx<0?1:-1);else if(Math.abs(dx)<10&&Math.abs(dy)<10&&bkTapOK)bkTap(e)});
+['#fishGet','#bookView'].forEach(sel=>['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>$(sel).addEventListener(t,e=>e.stopPropagation())));   // 낚시·도감 화면 위에서는 캐릭터가 걸어가지 않게
+addEventListener('resize',()=>{if(bkOn)bkFit()});addEventListener('orientationchange',()=>setTimeout(()=>{if(bkOn)bkFit()},250));
+renderBookBtn(false);
+
+$('#doorBL').addEventListener('click',()=>{if(!sleeping&&!moving&&!hEvt&&curRoom==='bath'){arrivedSay=false;switchRoom('living',1240,820,-1)}});
+// 욕조를 누르면 욕조 가까이 그림이 크게 떠요 (씻겨주기가 바로 시작되고, 끝나면 다시 누르거나 '돌아가기'로 닫기)
+function tubShow(on){const v=$('#tubView');if(on){tubOpen=true;v.classList.add('on');void v.offsetWidth;v.classList.add('show')}else{tubOpen=false;v.classList.remove('show');setTimeout(()=>{if(!tubOpen)v.classList.remove('on')},360)}}
+$('#tubHot').addEventListener('click',()=>{if(!sleeping&&!moving&&!hEvt&&curRoom==='bath'){tubShow(true);if(ctrlH()&&AH.wash)AH.wash();else if(ctrlU()&&AU.wash)AU.wash();else A.wash();renderStats();save()}});   // 욕조 클로즈업이 뜨자마자 그 위에서 바로 씻겨주기
+$('#tubView').addEventListener('click',()=>tubShow(false));
+$('#doorK').addEventListener('click',()=>{if(!sleeping&&!moving&&!hEvt&&curRoom==='kitchen'){arrivedSay=false;switchRoom('living',175,765)}});
+
+// ---- 선풍기 켜기/끄기 ----
+let fanOn=false,fanT;
+function setFan(on){
+  fanOn=on;stage.classList.toggle('fan',on);clearTimeout(fanT);
+  if(on)fanSoundOn();else fanSoundOff();
+  if(on){fanT=setTimeout(()=>setFan(false),90000);if(!sleeping){say('시원하다~',2200);smile(1800)}}
+}
+$('#fan').addEventListener('click',()=>setFan(!fanOn));
+
+$('#clock').style.cursor='pointer';
+$('#clock').addEventListener('click',()=>{const o=[null,9,14,17,18,19,20,22,23,2];fakeH=o[(o.indexOf(fakeH)+1)%o.length];tickClock()});
+
+// ---- 반딧불이: 밤 9시~새벽 5시에 밖·호숫가·정원에 떠다녀요. 만지면 휙 도망가요 ----
+var ffReady=false;
+const FF_N=16,FF_REG={outside:{x0:60,x1:1450,y0:540,y1:900},lake:{x0:60,x1:1450,y0:500,y1:830},garden:{x0:80,x1:1450,y0:520,y1:900}};
+const FF={outside:[],lake:[],garden:[]};
+let ffOn=false,ffLevel=0,ffLast=0,ffShown=false,ffSayCd=0;
+const ffR=(a,b)=>a+Math.random()*(b-a);
+function ffPlace(f,reg){f.bx=ffR(reg.x0,reg.x1);f.by=ffR(reg.y0,reg.y1)}
+function ffFlee(f){
+  if(f.state!==0||f.o<.2)return;
+  f.state=1;f.t0=performance.now();f.vx=ffR(-380,380);f.vy=-ffR(260,520);f.sx=f.x;f.sy=f.y;
+  const now=Date.now();
+  if(now>ffSayCd&&Math.random()<.45&&!sleeping&&!moving&&!hEvt&&!singing&&!hSinging&&!bub.classList.contains('show')){
+    ffSayCd=now+9000;const L=['앗! 도망갔다…','깜짝 놀랐나 봐~','쉿, 놀라지 않게 살살…','반짝반짝… 어디 갔지?'];say(L[Math.random()*L.length|0],2000)
+  }
+}
+(function(){
+  const W={outside:'world3',lake:'world5',garden:'world7'};
+  for(const k in W){
+    const box=document.createElement('div');box.className='ffc';document.getElementById(W[k]).appendChild(box);
+    for(let i=0;i<FF_N;i++){
+      const el=document.createElement('i');el.className='ffly';box.appendChild(el);
+      const f={el,th:i/FF_N*.8,ax:ffR(30,90),ay:ffR(14,40),fx:ffR(.18,.42),fy:ffR(.25,.55),fx2:ffR(.5,.9),p1:ffR(0,6.28),p2:ffR(0,6.28),p3:ffR(0,6.28),fb:ffR(.9,1.6),pb:ffR(0,6.28),state:0,af:1,x:0,y:0,o:0,pe:false,t0:0,vx:0,vy:0,sx:0,sy:0,until:0};
+      ffPlace(f,FF_REG[k]);
+      el.addEventListener('pointerdown',()=>ffFlee(f));
+      FF[k].push(f);
+    }
+  }
+  ffReady=true;
+})();
+function ffFrame(ts){
+  requestAnimationFrame(ffFrame);
+  const dt=Math.min(.1,(ts-ffLast)/1000||0);ffLast=ts;
+  ffLevel=Math.max(0,Math.min(1,ffLevel+(ffOn?dt/3.5:-dt/3.5)));
+  const g=FF[curRoom];
+  if(ffLevel<=0){
+    if(ffShown){ffShown=false;for(const k in FF)FF[k].forEach(f=>{f.el.style.opacity=0;f.el.style.pointerEvents='none';f.pe=false;f.o=0})}
+    return
+  }
+  if(!g||document.hidden)return;
+  ffShown=true;
+  const t=ts/1000,reg=FF_REG[curRoom];
+  for(const f of g){
+    let x,y,o,sc;
+    if(f.af<1)f.af=Math.min(1,f.af+dt/1.8);
+    if(f.state===0){
+      x=f.bx+f.ax*Math.sin(t*f.fx+f.p1)+f.ax*.4*Math.sin(t*f.fx2+f.p3);y=f.by+f.ay*Math.sin(t*f.fy+f.p2);
+      const b=.5+.5*Math.sin(t*f.fb+f.pb),inten=.12+.88*b*b*b;
+      o=Math.max(0,Math.min(1,(ffLevel-f.th)/.2))*f.af*inten;sc=.7+.5*inten;f.x=x;f.y=y
+    }else if(f.state===1){
+      const e=(performance.now()-f.t0)/1000;
+      x=f.sx+f.vx*e;y=f.sy+f.vy*e;o=Math.max(0,1-e/1.2);sc=1.2+e*.4;
+      if(e>1.2){f.state=2;f.until=performance.now()+ffR(4500,8000);o=0}
+    }else{
+      o=0;x=f.x;y=f.y;sc=.7;
+      if(performance.now()>f.until){ffPlace(f,reg);f.state=0;f.af=0}
+    }
+    f.o=o;
+    const st=f.el.style;st.opacity=o.toFixed(3);st.transform='translate3d('+x.toFixed(1)+'px,'+y.toFixed(1)+'px,0) scale('+sc.toFixed(2)+')';
+    const pe=f.state===0&&o>.3;if(pe!==f.pe){f.pe=pe;st.pointerEvents=pe?'auto':'none'}
+  }
+}
+requestAnimationFrame(ffFrame);
+// 처음 반딧불이를 봤을 때 한 번만 하는 말
+setInterval(()=>{
+  if(ffOn&&ffLevel>.6&&!S.ffSeen&&FF[curRoom]&&!sleeping&&!moving&&!hEvt&&!singing&&!hSinging&&!document.hidden&&!bub.classList.contains('show')){
+    S.ffSeen=true;save();say('우와… 반딧불이다~',2800);setTimeout(()=>{if(!sleeping){anim('happy',1600);smile(1800)}},300)
+  }
+},1500);
+stage.classList.add('noanim');
+fit();renderStats();tickClock();place();
+requestAnimationFrame(()=>requestAnimationFrame(()=>stage.classList.remove('noanim')));
+requestAnimationFrame(loop);setTimeout(wander,6000);setTimeout(blink,2500);
+setTimeout(()=>say('오늘도 좋은 날이야~',3000),600);
+
+
+// ---- 상태바 색: 방 천장 색에 맞춰 시간대별로 바꿈 ----
+const CEIL={out:[110,170,215],base:[144,111,82],pm:[136,103,75],set:[117,78,54],eve:[110,72,54],tw:[76,56,54],nt:[66,45,42],n2:[58,40,40],n3:[50,35,36],kit:[130,101,75]};
+function paintTop(){
+  const h=nowH(),key=curRoom==='kitchen'||curRoom==='bath'?'kit':(curRoom==='outside'||curRoom==='lake'||curRoom==='garden'||curRoom==='yard'||curRoom==='cove'||curRoom==='cend'||curRoom==='wood'||curRoom==='wend'||curRoom==='hill'||curRoom==='fish')?'out':bgKey(h);
+  const mul=(curRoom!=='living'?(h>=21||h<5?.5:h>=20?.72:1):1)*.78;
+  const c=CEIL[key].map(v=>Math.round(v*mul)),col='rgb('+c.join(',')+')';
+  let m=document.querySelector('meta[name=theme-color]');
+  if(!m){m=document.createElement('meta');m.name='theme-color';document.head.appendChild(m)}
+  m.content='#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+  document.documentElement.style.backgroundColor=col;
+}
+setInterval(paintTop,5000);paintTop();
+
+// ---- 소리: 아이폰 화면녹화에 확실히 같이 녹음되도록 일반 <audio> 파일로 재생해요 ----
+// (아이폰은 audio.volume을 무시해서, 볼륨과 페이드 인/아웃은 음원 파일 audio/bgm-s.mp3 · audio/hurt-s.mp3 · audio/hit1-s.mp3 · audio/sing1-s.mp3 에 미리 넣어뒀어요)
+function mkAudio(u,loop){const a=new Audio();a.preload='auto';a.loop=!!loop;a.setAttribute('playsinline','');a.src=u;(window.ALLA=window.ALLA||[]).push(a);return a}
+// 덕킹(노래할 때 음악 줄이기): 아이폰은 볼륨 조절이 안 돼서, 크기가 다른 음악 3개를 같이 틀어놓고 소리 나는 쪽만 바꿔 줘요 (음소거는 아이폰에서도 돼요)
+const BGM={layers:[mkAudio('audio/bgm-s.mp3',true)],lvl:0,target:0,started:false};
+BGM.el=BGM.layers[0];
+const AMBD={el:mkAudio('audio/ambient-s.mp3',true)},AMBE={el:mkAudio('audio/ambient-eve-s.mp3',true)};   // 환경음: 노을(17시)~밤 11시 전은 새 자연 소리, 그 외 시간은 기존 소리
+let AMB=(nowH()>=17&&nowH()<23)?AMBE.el:AMBD.el;
+var ambReady=false;   // 환경음 준비 전(스크립트 앞부분 실행 중)에는 건드리지 않아요
+function ambPick(){
+  if(!ambReady)return;
+  const h=nowH(),want=(h>=17&&h<23)?AMBE.el:AMBD.el;
+  if(want===AMB)return;
+  const old=AMB;AMB=want;try{old.pause()}catch(e){}
+  if(BGM.started&&!appAway&&!document.hidden){try{AMB.muted=false;AMB.currentTime=0}catch(e){}tryPlay(AMB)}
+}
+ambReady=true;
+//   // 배경음악 아래에 조용히 깔리는 환경음 (볼륨은 파일에 미리 넣어둠, 음악보다 약 7dB 작게)
+// [테스트] 음악 1개 + Web Audio 볼륨(GainNode)으로 덕킹: 단계 0/1/2 = 100%/70%/45%
+const BGMG=[1,.7,.45];let bgmCtx=null,bgmGain=null;
+function bgmAudioInit(){if(bgmCtx)return;try{const AC=window.AudioContext||window.webkitAudioContext;bgmCtx=new AC();const src=bgmCtx.createMediaElementSource(BGM.el);bgmGain=bgmCtx.createGain();bgmGain.gain.value=BGMG[BGM.lvl];src.connect(bgmGain);bgmGain.connect(bgmCtx.destination)}catch(e){bgmCtx=null;bgmGain=null}}
+// 선풍기·환경음도 같은 방식: 소리 파일들을 각각 볼륨 조절 장치(GainNode) 하나씩에 모아 연결해서, 음악과 같은 단계로 같이 줄여요
+let busDone=false,fanGain=null,ambGain=null;
+function busInit(){
+  if(busDone||!bgmCtx)return;
+  try{
+    const fl=fanEls().map(d=>d.el),al=[AMBD.el,AMBE.el];
+    fanGain=bgmCtx.createGain();ambGain=bgmCtx.createGain();
+    fanGain.gain.value=ambGain.gain.value=BGMG[BGM.lvl];
+    fanGain.connect(bgmCtx.destination);ambGain.connect(bgmCtx.destination);
+    const route=(els,g)=>els.forEach(el=>{try{bgmCtx.createMediaElementSource(el).connect(g)}catch(e){}});
+    route(fl,fanGain);route(al,ambGain);
+    busDone=true;
+  }catch(e){}
+}
+function bgmResume(){try{if(bgmCtx&&bgmCtx.state!=='running')bgmCtx.resume()}catch(e){}}
+function bgmApply(){bgmAudioInit();busInit();bgmResume();[bgmGain,fanGain,ambGain].forEach(g=>{if(g)try{g.gain.setTargetAtTime(BGMG[BGM.lvl],bgmCtx.currentTime,.06)}catch(e){}})}
+function bgmSync(){if(BGM.layers.length<2)return;   // 3개의 재생 위치를 맞춰 둬요 (소리 안 나는 쪽만 이동해서 끊김 없음)
+  const t=BGM.layers[BGM.lvl].currentTime;
+  BGM.layers.forEach((a,i)=>{
+    if(i===BGM.lvl||a.paused||a.seeking)return;
+    let d=a.currentTime-t;const du=a.duration;
+    if(isFinite(du)&&du>1&&Math.abs(d)>du/2)d-=Math.sign(d)*du;   // 반복 구간 경계에서 헷갈리지 않게
+    if(Math.abs(d)>.12){try{a.currentTime=t}catch(e){}}
+  });
+}
+setInterval(()=>{if(!appAway&&!document.hidden&&BGM.started&&!BGM.stepping&&BGM.lvl===BGM.target)bgmSync()},4000);   // 노래 안 할 때 조용히 미리 맞춰 둬서, 바뀌는 순간엔 되감기가 필요 없어요
+function bgmHelpersPause(){BGM.layers.slice(1).forEach(a=>{try{a.pause()}catch(e){}})}
+function bgmStep(){
+  if(BGM.stepping)return;
+  if(BGM.lvl===BGM.target){return}
+  BGM.stepping=true;
+  BGM.lvl+=BGM.target>BGM.lvl?1:-1;bgmApply();
+  setTimeout(()=>{BGM.stepping=false;bgmStep()},130);   // 130ms마다 한 단계씩 → 약 0.3초에 걸쳐 부드럽게 줄고 커져요
+}
+function bgmHelpersOn(cb){   // 보조 음악 2개를 지금 위치에 맞춰 켜고, 실제로 나오기 시작하면 cb 실행
+  clearTimeout(BGM.hp);
+  const base=BGM.layers[0],hs=BGM.layers.slice(1).filter(a=>a.paused);
+  if(!hs.length){cb();return}
+  let left=hs.length,fired=false;
+  const go=()=>{if(fired)return;fired=true;cb()};
+  hs.forEach(a=>{try{a.currentTime=base.currentTime}catch(e){}a.muted=true;a.addEventListener('playing',()=>{if(--left===0)go()},{once:true});tryPlay(a)});
+  setTimeout(go,700);
+}
+const SFX={hurt:{el:mkAudio('audio/hurt-s.mp3')},hit:{el:mkAudio('audio/hit1-s.mp3')},sing:{el:mkAudio('audio/sing1-s.mp3')},hsing:{el:mkAudio('audio/hsing-s.mp3')},surp:{el:mkAudio('audio/surprise-s.mp3')},knockL:{el:mkAudio('audio/knock-s.mp3')},knockK:{el:mkAudio('audio/knock-k.mp3')},stepL:{el:mkAudio('audio/step-s.mp3')},stepK:{el:mkAudio('audio/step-k.mp3')},hCome:{el:mkAudio('audio/hachi-come-s.mp3')},hLive:{el:mkAudio('audio/hachi-live-s.mp3')},uHint:{el:mkAudio('audio/usagi-hint-s.mp3')},uArr:{el:mkAudio('audio/usagi-arrive-s.mp3')},cur:null};
+const HSING_ENV='0100000011111100001100000110110000110011100000001111111000011011000000';   // 하치와레 노래("예예~ 타파스타!") 입 모양 (0.05초마다 1=벌림)
+const SING_ENV='00000111111111110000001110011001110000000001111111111111100000000000011001100111100001111111100000000000011111111111011111010000000000011111000000001111100000000111111011100000011111101111100000011111111111000001000001100000011001110000000011100000';   // 노래 소리 크기에 맞춘 입 모양 (0.05초마다 1=벌림)
+let appAway=false;
+// ---- 선풍기 소리: 켜면 '딸깍+돌아가기 시작' → 계속 도는 소리, 끌 때는 서서히 작아지며 끝나요 (볼륨/페이드는 음원 파일에 미리 넣어둠) ----
+// 아이폰은 <audio loop> 가 반복될 때마다 아주 짧게 끊겨요. 그래서 반복 대신, 같은 소리 2개를 번갈아 켜서
+// 앞 소리가 서서히 줄어드는 동안(0.8초) 다음 소리가 서서히 커지며 겹치게 해서 끊김이 안 들리게 해요.
+const FAN_O=0.8,FAN_L=10.59;   // 겹치는 길이(초) / 반복음에서 겹침 직전까지의 길이(초) — 음원 파일(audio/fan-loop2-s.mp3)에 맞춘 값
+const FAN={intro:{el:mkAudio('audio/fan-intro2-s.mp3')},loops:[{el:mkAudio('audio/fan-loop2-s.mp3')},{el:mkAudio('audio/fan-loop2-s.mp3')}],cur:0,
+  fo:[{el:mkAudio('audio/fan-fo1-s.mp3')},{el:mkAudio('audio/fan-fo2-s.mp3')},{el:mkAudio('audio/fan-fo3-s.mp3')}],phase:'off',iv:null,out:null};
+function fanEls(){return [FAN.intro,...FAN.loops,...FAN.fo]}
+function fanHalt(){clearInterval(FAN.iv);FAN.iv=null;fanEls().forEach(d=>{try{d.el.pause()}catch(e){}});FAN.out=null}
+// next 소리가 실제로 나기 시작하는 순간 나머지 선풍기 소리를 모두 멈춰서, 소리 사이가 끊기지 않게 이어붙여요
+function fanSwap(next){
+  try{next.currentTime=0}catch(x){}
+  let done=false,tm=null;
+  const stopOthers=()=>{if(done)return;done=true;clearTimeout(tm);fanEls().forEach(d=>{if(d.el!==next){try{d.el.pause()}catch(x){}}})};
+  next.addEventListener('playing',stopOthers,{once:true});
+  tm=setTimeout(stopOthers,600);
+  fxPlay(next);
+}
+function fanLoopTick(){   // 지금 도는 소리가 겹침 지점에 오면 다른 쪽 소리를 이어서 켜요
+  if(FAN.phase!=='loop'){clearInterval(FAN.iv);FAN.iv=null;return}
+  const c=FAN.loops[FAN.cur].el;
+  if(c.ended||c.currentTime>=FAN_L){
+    FAN.cur^=1;const n=FAN.loops[FAN.cur].el;try{n.currentTime=0}catch(e){}fxPlay(n);
+  }
+}
+function fanLoopStart(){
+  clearInterval(FAN.iv);FAN.phase='loop';FAN.cur=0;
+  FAN.loops.forEach(d=>{try{d.el.pause()}catch(e){}});
+  const e=FAN.loops[0].el;try{e.currentTime=0}catch(x){}fxPlay(e);
+  FAN.iv=setInterval(fanLoopTick,30);
+}
+function fanSoundOn(){
+  if(appAway||document.hidden)return;
+  fanHalt();FAN.phase='intro';
+  const i=FAN.intro.el;try{i.currentTime=0}catch(e){}fxPlay(i);
+  FAN.iv=setInterval(()=>{   // 돌기 시작하는 소리가 끝나가면(끝이 서서히 줄어드는 동안) 계속 도는 소리를 겹쳐서 이어붙이기
+    if(FAN.phase!=='intro'){clearInterval(FAN.iv);FAN.iv=null;return}
+    const d=i.duration||4.545;
+    if(i.ended||i.currentTime>=d-FAN_O)fanLoopStart();
+  },30);
+}
+function fanSoundOff(){
+  if(FAN.phase==='off'||FAN.phase==='out')return;
+  const was=FAN.phase;let t=0;
+  if(was==='intro')t=FAN.intro.el.currentTime;
+  clearInterval(FAN.iv);FAN.iv=null;
+  let n=-1;   // 끌 때 돌아가던 속도에 가까운 '서서히 작아지는' 소리를 골라요
+  if(was==='loop'||t>=3.2)n=2;else if(t>=1.5)n=1;else if(t>=0.4)n=0;
+  if(n<0||appAway||document.hidden){fanHalt();FAN.phase='off';return}
+  FAN.phase='out';const e=FAN.fo[n].el;FAN.out=e;
+  e.onended=()=>{if(FAN.out===e){FAN.phase='off';FAN.out=null}};
+  fanSwap(e);   // 도는 소리를 먼저 끊지 않고, 줄어드는 소리가 시작되는 순간 바꿔서 끊김 없이
+}
+function bgmPlaying(){return !BGM.el.paused&&!appAway&&!document.hidden}
+function bgmPlay(){bgmApply();bgmResume();BGM.layers.forEach(tryPlay);tryPlay(AMB)}
+function tryPlay(a){try{const p=a.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}}
+function fxPlay(a){try{a.muted=false}catch(e){}tryPlay(a)}   // 효과음은 항상 소리를 켠 채로 재생
+// 효과음 재생이 나중에 막히지 않도록, 처음 터치 때 한 번씩 소리 없이 재생해서 '잠금 해제'
+function unlockList(){return [SFX.hurt,SFX.hit,SFX.sing,SFX.hsing,SFX.surp,SFX.knockL,SFX.knockK,SFX.stepL,SFX.stepK,SFX.hCome,SFX.hLive,SFX.uHint,SFX.uArr,...fanEls(),...[AMBD,AMBE].filter(d=>d.el!==AMB)]}
+function sfxUnlock(){
+  for(const d of unlockList()){
+    if(d.ok||d.pend)continue;d.pend=true;
+    const e=d.el;e.muted=true;
+    // 혹시 소리가 새어 나가도 효과음의 '끝부분(거의 무음)'만 나가도록, 끝 쪽으로 옮겨 놓고 틀어요
+    try{if(e.readyState>=1&&isFinite(e.duration)&&e.duration>.5)e.currentTime=Math.max(0,e.duration-.2)}catch(x){}
+    // 완전히 멈추고 맨 앞으로 되감은 뒤에야 소리를 되살려요 (바로 풀면 맨 앞 소리가 새어 나와서 효과음이 한꺼번에 들려요)
+    const release=()=>setTimeout(()=>{if(e.paused&&(e===AMBD.el||e===AMBE.el))e.muted=false},300);   // 효과음은 실제로 틀 때(fxPlay) 소리를 켜니까 여기선 켜지 않아요 → 처음에 새어 나오지 않음
+    let fin=false;
+    const done=ok=>{if(fin)return;fin=true;clearTimeout(guard);d.pend=false;if(ok){d.ok=true;try{e.pause();e.currentTime=0}catch(x){}}release()};
+    const guard=setTimeout(()=>{if(!fin){try{e.pause()}catch(x){}done(false)}},3000);   // 재생 결과가 안 돌아오면 3초 뒤 포기하고 다음 터치 때 다시 시도
+    try{const p=e.play();if(p&&p.then)p.then(()=>done(true),()=>done(false));else done(true)}catch(x){done(false)}
+  }
+}
+function bgmStart(){
+  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}   // 무음 스위치가 켜져 있어도 재생
+  if(appAway||document.hidden)return;
+  BGM.started=true;bgmPlay();sfxUnlock();
+}
+// 들어가자마자 바로 시작 시도 (브라우저가 소리를 막으면 첫 터치 때 바로 이어서 재생)
+bgmStart();
+const BGM_EV=['pointerdown','touchstart','touchend','click','keydown'];
+function bgmUnlock(){
+  if(document.getElementById('startScreen')&&!window.__started)return;   // 시작 화면이 떠 있는 동안엔 '터치해서 시작'을 눌러야만 시작
+  bgmStart();
+  if(!BGM.el.paused&&unlockList().every(d=>d.ok))BGM_EV.forEach(x=>removeEventListener(x,bgmUnlock));
+}
+BGM_EV.forEach(ev=>addEventListener(ev,bgmUnlock,{passive:true}));
+
+// 앱을 나가거나(홈으로 나가기·앱 전환·화면 잠금) 페이지가 내려가면 모든 소리 정지, 돌아오면 음악만 이어서 재생
+function appHide(){
+  appAway=true;try{stopSing()}catch(e){}
+  // 소리를 먼저 아주 짧게(약 0.05초) 줄여 0으로 만든 뒤 멈춰요 → 갑자기 끊기면서 나는 '빵' 잡음 방지 (볼륨 장치가 0이라 멈추기 전에도 이미 안 들려요)
+  try{if(bgmCtx){const t=bgmCtx.currentTime;[bgmGain,fanGain,ambGain].forEach(g=>{if(g){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(0,t,.012)}})}}catch(e){}
+  setTimeout(()=>{
+    if(!appAway)return;   // 그 사이에 바로 돌아왔다면 멈추지 않아요
+    try{(window.ALLA||[]).forEach(a=>{try{a.pause()}catch(e){}})}catch(e){}try{if(bgmCtx)bgmCtx.suspend()}catch(e){}   // 만들어 둔 모든 소리(새소리 포함)를 확실히 멈춰요
+    BGM.layers.forEach(a=>{try{a.pause()}catch(e){}});try{AMBD.el.pause();AMBE.el.pause()}catch(e){}
+    for(const k of ['hurt','hit','sing','hsing','surp','knockL','knockK','stepL','stepK','hCome','hLive','uHint','uArr']){try{SFX[k].el.pause();SFX[k].el.currentTime=0}catch(e){}}
+    SFX.cur=null;
+    fanHalt();FAN.phase='off';
+  },90);
+}
+function appShow(){
+  if(!appAway)return;appAway=false;
+  try{if(bgmCtx){const t=bgmCtx.currentTime;[bgmGain,fanGain,ambGain].forEach(g=>{if(g){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(BGMG[BGM.lvl],t,.03)}})}}catch(e){}   // 나갈 때 0으로 줄여 둔 볼륨을 원래대로
+  if(BGM.started)bgmPlay();
+  if(fanOn)fanLoopStart();   // 선풍기가 켜져 있었으면 계속 도는 소리로 이어서
+}
+setInterval(()=>{if(appAway||document.hidden)(window.ALLA||[]).forEach(a=>{if(!a.paused)try{a.pause()}catch(e){}})},1000);   // 나간 상태에서 혹시 다시 켜진 소리가 있으면 바로 끔
+document.addEventListener('visibilitychange',()=>{document.hidden?appHide():appShow()});
+addEventListener('pagehide',appHide);
+addEventListener('pageshow',appShow);
+document.addEventListener('freeze',appHide);
+document.addEventListener('resume',appShow);
+// 화면녹화 시작·제어센터 등으로 음악이 잠깐 멈추면(앱을 나간 게 아닐 때) 다시 재생
+setInterval(()=>{if(appAway||document.hidden||!BGM.started)return;if(BGM.el.paused)bgmPlay();else{if(AMB.paused)tryPlay(AMB);BGM.layers.forEach(a=>{if(a.paused)tryPlay(a)})}},4000);
+
+function sfxPlay(k){
+  if(appAway||document.hidden)return;
+  const e=SFX[k].el;
+  try{
+    if(SFX.cur&&SFX.cur!==e){SFX.cur.pause();SFX.cur.currentTime=0}
+    e.currentTime=0;fxPlay(e);SFX.cur=e;
+  }catch(x){}
+}
+function sfxHurt(){sfxPlay('hurt')}
+function sfxHit(){sfxPlay('hit')}
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// ---- 시작 화면: 터치하면 음악과 함께 시작 (자동재생이 이미 되면 알아서 사라져요) ----
+(function(){
+  const ss=document.getElementById('startScreen');if(!ss)return;
+  let gone=false;
+  function hide(){if(gone)return;gone=true;ss.classList.add('hide');setTimeout(()=>ss.remove(),700)}
+  function go(e){
+    if(e&&e.preventDefault)e.preventDefault();
+    window.__started=true;
+    bgmStart();
+    hide();
+  }
+  ss.addEventListener('pointerdown',go);
+  ss.addEventListener('click',go);
+})();
+
+// ---- 홈 화면에 추가 (시작 화면 아래쪽 안내) ----
+(function(){
+  const inst=document.getElementById('ssInst');if(!inst)return;
+  const guide=document.getElementById('ssGuide');
+  if(STANDALONE){inst.remove();guide.remove();return}
+  let dp=null,gt=null;
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
+  addEventListener('appinstalled',()=>{inst.remove();guide.remove()});
+  function say(t){guide.innerHTML=t;guide.classList.add('on');clearTimeout(gt);gt=setTimeout(()=>guide.classList.remove('on'),6000)}
+  ['pointerdown','touchstart','touchend','click','keydown'].forEach(ev=>{inst.addEventListener(ev,e=>e.stopPropagation());guide.addEventListener(ev,e=>e.stopPropagation())});
+  document.getElementById('ssAnd').addEventListener('click',async()=>{
+    if(dp){const d=dp;dp=null;d.prompt();try{await d.userChoice}catch(_){}}
+    else say('Chrome 오른쪽 위 <b>⋮ 메뉴</b> → <b>홈 화면에 추가</b>(또는 앱 설치)를 눌러 주세요.');
+  });
+  document.getElementById('ssIos').addEventListener('click',()=>{
+    say('Safari 아래의 <b>공유 버튼(□↑)</b> → <b>홈 화면에 추가</b>를 눌러 주세요.<br>(아이폰은 Safari에서만 가능해요)');
+  });
+})();
+
+// ---- 씻겨주기: 욕조 클로즈업에서 비누 묻히고 → 문지르고 → 샤워기로 헹궈요 ----
+(function(){
+const V=$('#washView'),WC=$('#wChar'),CL=$('#wClip'),IMG=$('#wImg'),FOAM=$('#wFoam'),BUB=$('#wBubbles'),WB=$('#wBub'),PLAY=$('#washPlay'),TOOL=$('#wTool'),HINT=$('#washHint'),TRAY=$('#wTray');
+const CFG={p:{iw:941,ih:1672,cx:580,cy:1150,h:350},l:{iw:1448,ih:1086,cx:790,cy:860,h:330}};
+const NEED=18,MAXP=70;
+const UF={n:'img/chara/usagi-peek.webp',b:'img/chara/usagi-peek.webp',o:'img/chara/usagi-open.webp',bo:'img/chara/usagi-open.webp'};
+const WHO={
+  c:{f:{n:'img/chara/chiikawa.webp',b:'img/chara/chiikawa-blink.webp',o:'img/chara/chiikawa-open.webp',bo:'img/chara/chiikawa-blink-open.webp'},w:564,h:574,vis:.72,scrub:['간지러워~','헤헤','기분 좋아~','뽀득뽀득!'],rinse:['시원해~','차가워…!','우와~'],hi:'목욕 시간이다~!'},
+  h:{f:{n:'img/chara/hachiware-peek.webp',b:'img/chara/hachiware-blink.webp',o:'img/chara/hachiware-open.webp',bo:'img/chara/hachiware-blink-open.webp'},w:420,h:458,vis:.72,scrub:['간지러워~','헤헤','기분 좋아~','뽀득뽀득!'],rinse:['시원해~','차가워…!','우와~'],hi:'목욕 시간이다~!'},
+  u:{f:UF,w:420,h:543,vis:.62,scrub:['우라~','야하~','뽀득뽀득!','헤헷'],rinse:['시원해~','야하~','우라!'],hi:'우라~! 목욕 시간~'}
+};
+let who='c',FACE=WHO.c.f,VIS=.72;
+let on=false,tool=null,load=0,puffs=[],peak=0,done=false,drag=false,px=0,py=0,lx=0,ly=0,acc=0,rinseT=null,faceT=null,sayT=0,L={vw:1,vh:1,cw:1,ch:1,vh2:1,sx:0,sy:0,left:0,top:0,k:1,shW:1,shH:1},mask=null,sayHide=0;
+const MASKS={};
+// 캐릭터 몸 위에서만 거품이 묻도록 그림의 투명도를 작게 떠 둬요
+function loadMask(k){
+  if(MASKS[k]){mask=MASKS[k];return}
+  mask=null;const im=new Image();
+  im.onload=()=>{try{const w=80,h=Math.round(80*im.height/im.width),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(im,0,0,w,h);MASKS[k]={w,h,d:x.getImageData(0,0,w,h).data};if(who===k)mask=MASKS[k]}catch(e){}};
+  im.src=WHO[k].f.n;
+}
+function layout(){
+  const vw=V.clientWidth||innerWidth,vh=V.clientHeight||innerHeight,c=vh>vw?CFG.p:CFG.l;
+  const s=Math.max(vw/c.iw,vh/c.ih),ox=(vw-c.iw*s)/2,oy=(vh-c.ih*s)/2;
+  const cw=c.h*s*564/574,ch=cw*WHO[who].h/WHO[who].w,v2=ch*VIS,sx=c.cx*s+ox,sy=c.cy*s+oy;
+  WC.style.cssText='left:'+(sx-cw/2)+'px;top:'+(sy-v2)+'px;width:'+cw+'px;height:'+v2+'px';
+  CL.style.width=cw+'px';CL.style.height=v2+'px';IMG.style.width=cw+'px';IMG.style.height=ch+'px';
+  const m=Math.min(vw,vh);
+  L={vw,vh,cw,ch,vh2:v2,sx,sy,left:sx-cw/2,top:sy-v2,k:cw/200,shW:m*.5,shH:m*.5*620/563};
+  WB.style.left=sx+'px';WB.style.top=(sy-v2-4)+'px';
+  puffs.forEach(placePuff);
+}
+function placePuff(p){const d=p.r*2*L.k;p.el.style.cssText='left:'+p.fx*L.cw+'px;top:'+p.fy*L.ch+'px;width:'+d+'px;height:'+d+'px'}
+function onBody(x,y){
+  const a=x-L.left,b=y-L.top;if(a<0||b<0||a>L.cw||b>L.vh2)return false;
+  if(!mask)return true;
+  const mx=Math.min(mask.w-1,Math.floor(a/L.cw*mask.w)),my=Math.min(mask.h-1,Math.floor(b/L.ch*mask.h));
+  return mask.d[(my*mask.w+mx)*4+3]>40;
+}
+function addPuff(x,y){
+  const el=document.createElement('div');el.className='wp';FOAM.appendChild(el);
+  const p={el,fx:(x-L.left)/L.cw,fy:(y-L.top)/L.ch,r:11+Math.random()*13};
+  puffs.push(p);placePuff(p);
+  if(puffs.length>MAXP){const o=puffs.shift();o.el.remove()}
+  peak=Math.max(peak,puffs.length);
+}
+function floatBub(x,y,n=1){
+  const m=Math.min(L.vw,L.vh);
+  for(let i=0;i<n;i++){
+    const e=document.createElement('div'),sz=m*(.07+Math.random()*.09),k=Math.floor(Math.random()*6);
+    e.className='wb';e.style.cssText='left:'+(x+(Math.random()-.5)*30)+'px;top:'+y+'px;width:'+sz+'px;height:'+sz+'px;background-size:'+(sz*6)+'px '+sz+'px;background-position:-'+(k*sz)+'px 0;--dx:'+((Math.random()-.5)*60)+'px;--dy:'+(60+Math.random()*80)+'px;--d:'+(1.2+Math.random()*.8)+'s';
+    BUB.appendChild(e);setTimeout(()=>e.remove(),2200);
+  }
+}
+function wsay(t,ms=1600){WB.textContent=t;WB.classList.add('on');clearTimeout(sayHide);sayHide=setTimeout(()=>WB.classList.remove('on'),ms);sayT=Date.now()}
+function face(k,ms){IMG.src=FACE[k];clearTimeout(faceT);if(ms)faceT=setTimeout(()=>{IMG.src=FACE.n},ms)}
+function hint(){
+  let t;
+  if(done)t='깨끗해졌어요! ✨';
+  else if(peak>=NEED&&puffs.length>0)t='거품 가득! 샤워기로 헹궈줘요 🚿';
+  else if(load>0)t='샤워볼로 치이카와를 문질러요 🫧';
+  else if(puffs.length>0)t='비누를 더 묻혀서 문질러요';
+  else t='바디워시·샴푸를 눌러 비누를 묻혀요';
+  HINT.textContent=t;
+}
+function sel(t){tool=t;TRAY.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b.dataset.t===t))}
+TRAY.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||done||!on)return;
+  const t=b.dataset.t;
+  if(t==='body'||t==='sham'){
+    load=100;b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');
+    const r=b.getBoundingClientRect(),vr=V.getBoundingClientRect();
+    floatBub(r.left-vr.left+r.width/2,r.top-vr.top+8,3);
+    sel('ball');wsay(t==='body'?'바디워시 냄새 좋아~':'샴푸 냄새 좋아~',1500);hint();return;
+  }
+  sel(tool===t?null:t);hint();
+});
+// 지금 쓰는 도구가 닿는 지점 (화면 좌표)
+function pt(){
+  if(tool==='ball'){const w=Math.min(L.vw,L.vh)*.24,h=w*399/320;return{x:px,y:py-h*.3}}
+  const h=L.shH;return{x:px,y:py-h*.1};
+}
+function showTool(){
+  const q=pt();
+  if(tool==='ball'){
+    const w=Math.min(L.vw,L.vh)*.24,h=w*399/320;
+    TOOL.src='img/minigame/wash/wash-ball.webp';TOOL.style.width=w+'px';TOOL.style.height=h+'px';TOOL.style.left=(q.x-w/2)+'px';TOOL.style.top=(q.y-h/2)+'px';TOOL.classList.toggle('foamy',load>0);
+  }else if(tool==='shower'){
+    const w=L.shW,h=L.shH;
+    TOOL.src='img/minigame/wash/wash-shower-on.webp';TOOL.style.width=w+'px';TOOL.style.height=h+'px';TOOL.style.left=(q.x-w*.28)+'px';TOOL.style.top=(q.y-h*.5)+'px';TOOL.classList.remove('foamy');
+  }
+  TOOL.classList.add('on');
+}
+function scrub(){
+  const q=pt(),d=Math.hypot(q.x-lx,q.y-ly);lx=q.x;ly=q.y;
+  if(!onBody(q.x,q.y))return;
+  if(load<=0){if(Date.now()-sayT>2500)wsay('비누를 더 묻혀줘~');return}
+  if(IMG.src.indexOf(FACE.bo)<0)face('bo');
+  acc+=d;const step=Math.max(9,15*L.k);
+  while(acc>=step){
+    acc-=step;
+    let x=q.x+(Math.random()-.5)*22*L.k,y=q.y+(Math.random()-.5)*22*L.k;if(!onBody(x,y)){x=q.x;y=q.y}
+    addPuff(x,y);load=Math.max(0,load-2.2);
+    if(Math.random()<.4)floatBub(x,y,1);
+  }
+  TOOL.classList.toggle('foamy',load>0);
+  if(Date.now()-sayT>2600)wsay(WHO[who].scrub[Math.floor(Math.random()*4)]);
+  hint();
+}
+function rinse(){
+  if(!drag||tool!=='shower'||done)return;
+  const q=pt(),rx=L.shW*.24,ry=L.shH*.34;let n=0;
+  puffs=puffs.filter(p=>{
+    if(n>=3)return true;
+    const x=L.left+p.fx*L.cw,y=L.top+p.fy*L.ch;
+    if(((x-q.x)/rx)**2+((y-q.y)/ry)**2<1){n++;p.el.classList.add('out');setTimeout(()=>p.el.remove(),380);return false}
+    return true;
+  });
+  if(n&&Math.random()<.3)floatBub(q.x,q.y,1);
+  if(n&&Date.now()-sayT>2300)wsay(WHO[who].rinse[Math.floor(Math.random()*3)]);
+  hint();
+  if(peak>=NEED&&puffs.length===0)finish();
+}
+function stopRinse(){clearInterval(rinseT);rinseT=null}
+function pos(e){const r=V.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+PLAY.addEventListener('pointerdown',e=>{
+  if(!on||done)return;e.preventDefault();
+  if(!tool){wsay('아래에서 도구를 골라줘~',1400);return}
+  drag=true;try{PLAY.setPointerCapture(e.pointerId)}catch(x){}
+  const p=pos(e);px=p.x;py=p.y;const q=pt();lx=q.x;ly=q.y;acc=0;showTool();
+  if(tool==='shower'){stopRinse();rinseT=setInterval(rinse,70);face('b')}
+});
+PLAY.addEventListener('pointermove',e=>{
+  if(!drag||!on)return;e.preventDefault();
+  const p=pos(e);px=p.x;py=p.y;showTool();
+  if(tool==='ball')scrub();
+});
+function endDrag(){if(!drag)return;drag=false;TOOL.classList.remove('on');stopRinse();if(!done)face('n')}
+PLAY.addEventListener('pointerup',endDrag);PLAY.addEventListener('pointercancel',endDrag);
+V.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+V.addEventListener('contextmenu',e=>e.preventDefault());
+function finish(){
+  if(done)return;done=true;drag=false;stopRinse();TOOL.classList.remove('on');hint();
+  face('o');wsay('우와~ 깨끗해졌어!',2300);
+  for(let i=0;i<7;i++)setTimeout(()=>{if(on)floatBub(L.sx+(Math.random()-.5)*L.cw,L.sy-L.vh2*.5,1)},i*150);
+  setTimeout(()=>closeWash(true),2500);
+}
+function closeWash(ok){
+  if(!on)return;on=false;drag=false;stopRinse();clearTimeout(sayHide);
+  V.classList.remove('show');setTimeout(()=>{if(!on){V.classList.remove('on');FOAM.innerHTML='';BUB.innerHTML='';puffs=[]}},380);
+  if(ok){
+    try{
+      if(who==='c'){
+        S.clean=clamp(S.clean+60,0,100);S.love=clamp(S.love+2,0,100);T=null;
+        renderStats();save();
+        if(!sleeping){say('우와~ 깨끗해졌어!');fx('🫧');fx('🫧');anim('happy',1600);smile(1500)}
+      }else if(who==='h'){
+        S.hClean=clamp(S.hClean+60,0,100);HA.T=null;
+        hSay('우와~ 깨끗해졌어!',1800);hFx('🫧');hFx('🫧');hLoveAdd(2);hBlink(1700);hbody.className='happy';setTimeout(()=>{if(hbody.className==='happy')hbody.className=''},1600);
+        renderStats();save();
+      }else{
+        S.uClean=clamp(S.uClean+60,0,100);UA.T=null;
+        uSay('우와~ 깨끗해졌어!',1800);uFx('🫧');uFx('🫧');uLoveAdd(2);ubody.className='happy';setTimeout(()=>{if(ubody.className==='happy')ubody.className=''},1600);
+        renderStats();save();
+      }
+    }catch(e){}
+  }
+}
+$('#washBack').addEventListener('click',()=>closeWash(false));
+window.openWash=function(k){
+  if(on)return;
+  who=WHO[k]?k:'c';FACE=WHO[who].f;VIS=WHO[who].vis;loadMask(who);
+  on=true;done=false;peak=0;load=0;drag=false;puffs=[];FOAM.innerHTML='';BUB.innerHTML='';WB.classList.remove('on');
+  sel(null);IMG.src=FACE.n;
+  V.classList.add('on');layout();void V.offsetWidth;V.classList.add('show');hint();
+  setTimeout(()=>{if(on&&!done)wsay(WHO[who].hi,1800)},500);
+};
+setInterval(()=>{if(on&&!drag&&!done){face('b');setTimeout(()=>{if(on&&!drag&&!done)IMG.src=FACE.n},170)}},3300);
+addEventListener('resize',()=>{if(on)layout()});addEventListener('orientationchange',()=>setTimeout(()=>{if(on)layout()},250));
+})();
+
+// ---- 요리: 낚시터·숲에서 재료를 모아 주방에서 요리해요 ----
+const ING={fish:{e:'🐟',n:'물고기',h:26},berry:{e:'🍓',n:'열매',g:16},flower:{e:'🌸',n:'꽃',g:12},mush:{e:'🍄',n:'버섯',l:3},herb:{e:'🌿',n:'허브',c:22},rare:{e:'🌟',n:'특별한 재료',h:12,g:12,l:2,c:12}};
+// 재료 그림 (img/minigame/ingredients/ing-번호.webp) — 종류마다 여러 가지가 랜덤으로 떠요
+const ING_IMG={flower:[1,2,3,4,5,6,7,8,10,11,12,22,23],herb:[13,14,15,16,17,18,19,20],mush:[21,24,25],berry:[26,27,28,29,30,31,32,33,34,35,36],rare:[9,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52]};
+const ING_DEF={flower:2,herb:13,mush:24,berry:26,rare:49};   // 요리 재료 칸에 보이는 대표 그림
+const ingSrc=n=>'img/minigame/ingredients/ing-'+String(n).padStart(2,'0')+'.webp';
+const ingIcon=(k,v)=>ING_DEF[k]?'<img class="ii" src="'+ingSrc(v||ING_DEF[k])+'" alt="" draggable="false">':ING[k].e;
+const KIND={berry:'fruit',flower:'fruit'};
+const DISH={rare:['🌟','반짝반짝 특별식'],fish:['🍤','생선구이'],'fish+herb':['🥘','허브 생선찜'],'fish+mush':['🍲','버섯 생선 스튜'],fruit:['🍯','열매 잼'],'fruit+herb':['🥗','숲속 샐러드'],'herb+mush':['🍜','버섯 수프'],mix:['🍛','비밀 냄비']};
+function gainIng(k){S.pan=S.pan||{};S.pan[k]=(S.pan[k]||0)+1;save()}
+const ckV=$('#ckV'),ck={on:false,sel:[],step:''};
+const ckSay=t=>{const e=$('#ckSay');e.textContent=t||'';e.classList.toggle('on',!!t)};
+function ckRender(){
+  const p=S.pan||{};
+  $('#ckTray').innerHTML=Object.keys(ING).map(k=>{const n=(p[k]||0)-ck.sel.filter(x=>x===k).length;return `<button data-k="${k}"${n<=0?' disabled':''}><b>${ingIcon(k)}</b>${ING[k].n}<i>×${Math.max(n,0)}</i></button>`}).join('');
+  $('#ckSlots').innerHTML=[0,1,2].map(i=>`<span data-i="${i}">${ck.sel[i]?ingIcon(ck.sel[i]):'＋'}</span>`).join('');
+  $('#ckGo').disabled=!ck.sel.length;
+}
+$('#ckTray').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||ck.step!=='pick'||ck.sel.length>=3)return;ck.sel.push(b.dataset.k);ckRender()});
+$('#ckSlots').addEventListener('click',e=>{const i=e.target.closest('span');if(!i||ck.step!=='pick')return;ck.sel.splice(+i.dataset.i,1);ckRender()});
+async function cookOpen(){
+  if(ck.on||sleeping||moving||hEvt||(curRoom!=='kitchen'&&curRoom!=='living'))return;
+  if(!Object.values(S.pan||{}).some(n=>n>0)){say('재료가 없어… 낚시터나 숲에서 모아보자!',2600);return}
+  ck.on=true;hEvt=true;ck.sel=[];ck.step='intro';ckV.dataset.s='counter';ckV.className='on';ckRender();ckPlace();
+  void ckV.offsetWidth;ckV.classList.add('show','chi');
+  await waitMs(800);ckSay('요리 시작~!');await waitMs(1500);ckSay('');
+  ck.step='pick';ckV.classList.remove('chi');ckV.classList.add('pick');
+}
+// 치이카와가 카운터 뒤에 서서 상체만 보이게 (배경 그림 속 카운터 위치에 맞춰 놓아요)
+function ckPlace(){
+  const W=ckV.clientWidth,H=ckV.clientHeight;if(!W||!H)return;
+  const land=W>H,iw=land?1448:1024,ih=land?709:1536,S=Math.max(W/iw,H/ih);
+  const ox=(W-iw*S)/2,oy=(H-ih*S)*(land?.7:.5);
+  const cx=land?790:570,line=land?580:945,w=(land?190:230)*S,h=w*574/564,e=$('#ckChi');
+  e.style.width=w+'px';e.style.left=(ox+cx*S-w/2)+'px';e.style.top=(oy+line*S-h*.86)+'px';
+}
+addEventListener('resize',()=>{if(ck.on)ckPlace()});
+function cookClose(){
+  ckV.classList.remove('show','chi','pick');setTimeout(()=>{ckV.classList.remove('on');ck.on=false;hEvt=false;ck.step=''},480);
+}
+async function cookGo(){
+  if(ck.step!=='pick'||!ck.sel.length)return;
+  ck.step='stove';ckV.classList.remove('pick');ckV.dataset.s='stove';ckSay('냄비를 눌러 저어봐~! 초록일 때 불 끄기!');
+  const pot=$('#ckPot'),mk=$('#ckMk');
+  const pos=await new Promise(res=>{let v=0,raf,done=false;const t0=performance.now();
+    const fin=()=>{if(done)return;done=true;cancelAnimationFrame(raf);$('#ckStop').onclick=null;res(v)};
+    const loop=n=>{const ph=((n-t0)/1400)%2;v=ph<1?ph:2-ph;mk.style.left=(v*100)+'%';raf=requestAnimationFrame(loop)};
+    raf=requestAnimationFrame(loop);$('#ckStop').onclick=fin;setTimeout(fin,9000)});
+  const good=pos>.38&&pos<.62,first=!Object.keys(S.dex||{}).length;
+  ckSay('');ck.step='taste';ckV.dataset.s='counter';await waitMs(900);ckV.classList.add('chi');
+  const kinds=[...new Set(ck.sel.map(k=>KIND[k]||k))].sort(),key=kinds.join('+'),dk=DISH[key]?key:'mix',D=DISH[dk];
+  const m=good?1:.6,fxs={h:0,g:0,l:0,c:0};
+  ck.sel.forEach(k=>{S.pan[k]=Math.max(0,(S.pan[k]||0)-1);for(const q in fxs)fxs[q]+=(ING[k][q]||0)*m});
+  S.hunger=clamp(S.hunger+fxs.h,0,100);S.energy=clamp(S.energy+fxs.g,0,100);S.clean=clamp(S.clean+fxs.c,0,100);S.love=clamp(S.love+fxs.l+1,0,100);
+  S.dex=S.dex||{};const isNew=!S.dex[dk];S.dex[dk]=(S.dex[dk]||0)+1;
+  if(first){ckSay('처음 만든 요리야…! 두근두근');await waitMs(1800)}
+  ckSay(D[1]+' 완성!');await waitMs(1200);
+  ckSay('냠냠…'+(first?' (후후 후…)':''));await waitMs(first?2200:1100);
+  ckSay(good?'맛있어~!':'조금 탔지만 맛있어!');
+  const parts=[];if(fxs.h)parts.push('배고픔 +'+Math.round(fxs.h));if(fxs.g)parts.push('기운 +'+Math.round(fxs.g));if(fxs.c)parts.push('청결 +'+Math.round(fxs.c));parts.push('호감도 +'+Math.round(fxs.l+1));
+  $('#ckRes').innerHTML=`<div class="d">${D[0]}</div>`+(isNew?'<span class="p">✨ 새 요리! 요리 모음에 기록했어요</span>':'')+`<span class="p">${parts.join(' · ')}</span>`;
+  $('#ckRes').classList.add('on');renderStats();save();
+  await waitMs(first?3200:2400);$('#ckRes').classList.remove('on');ckSay('');
+  cookClose();setTimeout(()=>say('잘 먹었습니다~!',2000),700);
+}
+function ckDexShow(on){
+  if(on)$('#ckDexG').innerHTML=Object.keys(DISH).map(k=>{const c=(S.dex||{})[k];return `<div class="${c?'':'no'}"><b>${DISH[k][0]}</b>${c?DISH[k][1]+' ×'+c:'？？？'}</div>`}).join('');
+  $('#ckDexBox').classList.toggle('on',on);
+}
+$('#ckGo').addEventListener('click',cookGo);
+$('#ckBack').addEventListener('click',()=>{if(ck.step==='pick')cookClose()});
+$('#ckDex').addEventListener('click',()=>ckDexShow(true));
+$('#ckDexBox').addEventListener('click',()=>ckDexShow(false));
+$('#ckPot').addEventListener('click',e=>{const p=e.currentTarget;p.classList.remove('stir');void p.offsetWidth;p.classList.add('stir')});
+['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>ckV.addEventListener(t,e=>e.stopPropagation()));
+$('#world2').insertAdjacentHTML('beforeend','<button class="door" id="cookBtn"><b>🍳</b>요리하기</button>');
+$('#world').insertAdjacentHTML('beforeend','<button class="door" id="cookBtn2" style="left:620px;top:690px"><b>🍳</b>요리하기</button>');   // 거실에서도 요리할 수 있어요
+
+// ---- 숲 채집: 풀숲·나무 밑에서 반짝이는 재료를 주워요 (최대 5곳, 줍고 나면 3~15분 뒤 새 자리가 랜덤으로 생겨요) ----
+const GZ={   // 구역별 재료와 자리 후보 (숲 그림 좌표)
+  flower:{ks:['flower','herb'],ps:[[[300,690],[485,680],[525,790],[560,900],[600,1000],[600,1035],[380,1035],[330,900],[300,800]]]},   // 왼쪽 꽃밭
+  berry:{ks:['berry'],ps:[[[780,640],[1000,650],[1050,800],[1000,880],[890,830],[850,760],[780,700]],[[1030,950],[1200,950],[1230,1035],[1050,1035]]]},   // 오른쪽 덤불·아래 풀밭
+  mush:{ks:['mush'],ps:[[[220,600],[440,590],[470,680],[250,690]],[[670,560],[830,560],[790,640],[670,625]]]}   // 바위 옆·나무 그늘
+};
+const G_MAX=5,G_MIN=3*60e3,G_MAX_MS=15*60e3,gRand=()=>G_MIN+Math.random()*(G_MAX_MS-G_MIN);
+function gIn(x,y,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const[xi,yi]=p[i],[xj,yj]=p[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c}
+function gPt(p){const xs=p.map(q=>q[0]),ys=p.map(q=>q[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);for(let n=0;n<300;n++){const x=Math.round(x0+Math.random()*(x1-x0)),y=Math.round(y0+Math.random()*(y1-y0));if(gIn(x,y,p))return{x,y}}return{x:Math.round((p[0][0]+p[1][0]+p[2][0])/3),y:Math.round((p[0][1]+p[1][1]+p[2][1])/3)}}
+function gSpawn(){
+  const G=S.gather,cnt={};Object.keys(GZ).forEach(z=>cnt[z]=0);G.spots.forEach(s=>cnt[s.z]++);
+  const mn=Math.min(...Object.values(cnt)),zs=Object.keys(GZ).filter(z=>cnt[z]===mn),z=zs[Math.random()*zs.length|0],Z=GZ[z];   // 가장 적게 반짝이는 구역부터 채워서 고르게 섞어요
+  const p=gPt(Z.ps[Math.random()*Z.ps.length|0]);
+  const k=Math.random()<.08?'rare':Z.ks[Math.random()*Z.ks.length|0],L=ING_IMG[k];   // 가끔(8%) 특별한 재료가 반짝여요
+  G.spots.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),z,k,v:L[Math.random()*L.length|0],x:p.x,y:p.y});
+}
+function gTick(){
+  const G=S.gather=S.gather||{spots:[],next:null,init:false},now=Date.now();let chg=false;
+  if(!G.init){G.init=true;for(let i=0;i<3;i++)gSpawn();G.next=now+gRand();chg=true}   // 처음엔 3곳이 이미 반짝여요
+  while(G.spots.length<G_MAX&&G.next&&G.next<=now){gSpawn();chg=true;G.next=G.spots.length<G_MAX?G.next+gRand():null}   // 게임을 꺼둔 동안 지난 시간만큼도 채워요
+  if(G.spots.length>=G_MAX){if(G.next){G.next=null;chg=true}}
+  else if(!G.next){G.next=now+gRand();chg=true}
+  if(chg)save();gRender();
+}
+function gRender(){
+  const box=$('#gSpots');if(!box)return;const G=S.gather,ids=new Set(G.spots.map(s=>s.id)),have=new Set();
+  [...box.children].forEach(e=>{if(e.classList.contains('pick'))return;if(!ids.has(e.dataset.id))e.remove();else have.add(e.dataset.id)});
+  G.spots.forEach(s=>{if(have.has(s.id))return;const b=document.createElement('button');b.className='hot gspot';b.dataset.id=s.id;b.style.left=s.x+'px';b.style.top=s.y+'px';b.innerHTML=ingIcon(s.k,s.v);if(s.k==='rare')b.classList.add('rare');b.addEventListener('click',()=>gGo(s.id));box.appendChild(b)});
+}
+function gGo(id){   // 반짝이는 곳을 누르면 바로 주워요
+  if(sleeping||moving||hEvt||curRoom!=='wood')return;
+  const s=S.gather.spots.find(q=>q.id===id);if(!s)return;
+  midGo=null;arrivedSay=false;gPick(id);   // 걸어가지 않고 터치만 해도 바로 채집돼요
+}
+function gPick(id){
+  const G=S.gather,i=G.spots.findIndex(q=>q.id===id);if(i<0)return;const s=G.spots[i],F=focusPt();
+  if(G.spots.length>=G_MAX||!G.next)G.next=Date.now()+gRand();   // 다 차 있었다면 이때부터 3~15분 뒤에 새 자리
+  G.spots.splice(i,1);gainIng(s.k);
+  const el=$('#gSpots').querySelector('[data-id="'+id+'"]');
+  if(el){el.classList.add('pick');el.style.left=F.x+'px';el.style.top=(F.y-70)+'px';setTimeout(()=>el.remove(),520)}
+  const m=ING[s.k].e+' '+ING[s.k].n+'을(를) 주웠어!';
+  if(ctrlH())hSay(m,1800);else say(m,1800);fx(ING[s.k].e);
+}
+$('#world10').insertAdjacentHTML('beforeend','<div id="gSpots" style="position:absolute;inset:0;pointer-events:none"></div>');
+gTick();setInterval(gTick,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)gTick()});
+$('#cookBtn').addEventListener('click',cookOpen);
+$('#cookBtn2').addEventListener('click',cookOpen);
+</script>
+</body>
+</html>
