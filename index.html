@@ -565,7 +565,20 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
 @media (orientation:landscape){#ckB1{background-image:url(img/bg/cook-start-wide.webp),linear-gradient(#f3dfb8,#d5a974 70%,#a97c4f);background-position:center 70%}}
 #ckB2{background-image:url(cook-stove.webp),linear-gradient(#5a4636,#3a2c22 60%,#241a14);opacity:0}
 #ckV[data-s=stove] #ckB2{opacity:1}
-#ckChi{position:absolute;left:50%;top:50%;width:min(46vw,250px);clip-path:inset(0 0 14% 0);opacity:0;transition:opacity .5s;pointer-events:none}
+#ckSink{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .6s}
+#ckV[data-s=sink] #ckSink{opacity:1;pointer-events:auto}
+.sk{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity .6s}
+#ckTap{position:absolute;transform:translate(-50%,-50%);width:92px;height:92px;border:0;border-radius:50%;font-size:44px;display:none;align-items:center;justify-content:center;background:rgba(255,250,240,.85);box-shadow:0 0 0 6px rgba(255,255,255,.5),0 2px 10px rgba(40,70,110,.4);cursor:pointer;animation:ckpulse 1.2s ease-in-out infinite}
+#ckTap.on{display:flex}
+@keyframes ckpulse{50%{transform:translate(-50%,-50%) scale(1.14)}}
+.ckW{position:absolute;transform:translate(-50%,-50%);border:0;background:none;padding:0;cursor:pointer;filter:sepia(.7) brightness(.82) saturate(.8);transition:filter .3s,opacity .5s;-webkit-tap-highlight-color:transparent;animation:ckfl 2.4s ease-in-out infinite}
+.ckW.clean{filter:none;pointer-events:none}.ckW.gone{opacity:0}
+.ckW.rub{animation:ckrub .28s}
+@keyframes ckfl{50%{margin-top:-6px}}
+@keyframes ckrub{25%{transform:translate(-50%,-50%) rotate(-12deg) scale(1.08)}75%{transform:translate(-50%,-50%) rotate(12deg) scale(1.08)}}
+.ckBub{position:absolute;font-size:26px;pointer-events:none;animation:ckup 1s ease-out forwards}
+@keyframes ckup{to{transform:translateY(-70px);opacity:0}}
+#ckChi{position:absolute;left:50%;top:50%;width:min(46vw,250px);clip-path:inset(0 0 16% 0);opacity:0;transition:opacity .5s;pointer-events:none}
 #ckV.chi #ckChi{opacity:1}
 #ckSay{position:absolute;left:50%;top:22%;transform:translateX(-50%);max-width:84%;background:rgba(255,250,240,.95);color:var(--ink);border-radius:18px;padding:.6em 1.1em;font-size:18px;font-weight:800;text-align:center;opacity:0;transition:opacity .3s;box-shadow:0 2px 8px rgba(60,40,20,.3)}
 #ckSay.on{opacity:1}
@@ -738,6 +751,7 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
   </div>
   <div id="ckV">
     <div class="ckBg" id="ckB1"></div><div class="ckBg" id="ckB2"></div>
+    <div id="ckSink"><div class="sk" style="background-image:url(img/bg/sink-0.webp)"></div><div class="sk" style="background-image:url(img/bg/sink-1.webp)"></div><div class="sk" style="background-image:url(img/bg/sink-2.webp)"></div><div class="sk" style="background-image:url(img/bg/sink-3.webp)"></div><div class="sk" style="background-image:url(img/bg/sink-4.webp)"></div><button id="ckTap">💧</button></div>
     <img id="ckChi" src="img/chara/chiikawa.webp" alt="" draggable="false">
     <div id="ckSay"></div><div id="ckRes"></div>
     <button id="ckBack">◀ 그만하기</button><button id="ckDex">📖 요리 모음</button>
@@ -2550,7 +2564,7 @@ $('#ckSlots').addEventListener('click',e=>{const i=e.target.closest('span');if(!
 async function cookOpen(){
   if(ck.on||sleeping||moving||hEvt||(curRoom!=='kitchen'&&curRoom!=='living'))return;
   if(!Object.values(S.pan||{}).some(n=>n>0)){say('재료가 없어… 낚시터나 숲에서 모아보자!',2600);return}
-  ck.on=true;hEvt=true;ck.sel=[];ck.step='intro';ckV.dataset.s='counter';ckV.className='on';ckRender();ckPlace();
+  [0,1,2,3,4].forEach(i=>{new Image().src='img/bg/sink-'+i+'.webp'});ck.on=true;hEvt=true;ck.sel=[];ck.step='intro';ckV.dataset.s='counter';ckV.className='on';ckRender();ckPlace();
   void ckV.offsetWidth;ckV.classList.add('show','chi');
   await waitMs(800);ckSay('요리 시작~!');await waitMs(1500);ckSay('');
   ck.step='pick';ckV.classList.remove('chi');ckV.classList.add('pick');
@@ -2560,16 +2574,47 @@ function ckPlace(){
   const W=ckV.clientWidth,H=ckV.clientHeight;if(!W||!H)return;
   const land=W>H,iw=land?1448:1024,ih=land?709:1536,S=Math.max(W/iw,H/ih);
   const ox=(W-iw*S)/2,oy=(H-ih*S)*(land?.7:.5);
-  const cx=land?790:570,line=land?580:945,w=(land?190:230)*S,h=w*574/564,e=$('#ckChi');
-  e.style.width=w+'px';e.style.left=(ox+cx*S-w/2)+'px';e.style.top=(oy+line*S-h*.86)+'px';
+  const cx=land?734:530,line=land?568:945,w=(land?390:273)*S,h=w*574/564,e=$('#ckChi');
+  e.style.width=w+'px';e.style.left=(ox+cx*S-w/2)+'px';e.style.top=(oy+line*S-h*.84)+'px';
 }
 addEventListener('resize',()=>{if(ck.on)ckPlace()});
+// ---- 재료 씻기: 수도꼭지를 틀고, 재료를 눌러서 문질러요 ----
+const skSet=n=>document.querySelectorAll('#ckSink .sk').forEach((e,i)=>e.style.opacity=i===n?1:0);
+function skPlace(){
+  const W=ckV.clientWidth,H=ckV.clientHeight,S=Math.max(W/1448,H/1086),ox=(W-1448*S)/2,oy=(H-1086*S)/2;
+  const tap=$('#ckTap');tap.style.left=(ox+700*S)+'px';tap.style.top=(oy+410*S)+'px';
+  const els=[...document.querySelectorAll('.ckW')],n=els.length,sz=Math.min(W*.24,H*.17,150);
+  const vx0=Math.max(300,-ox/S),vx1=Math.min(1150,(W-ox)/S),cx=(vx0+vx1)/2,gap=Math.min((vx1-vx0)*.3,270);
+  const yv=Math.min(880,(H-oy)/S-sz/S*.75);
+  els.forEach((e,i)=>{e.style.left=(ox+(cx+(i-(n-1)/2)*gap)*S)+'px';e.style.top=(oy+yv*S)+'px';e.style.width=e.style.height=sz+'px'});
+}
+addEventListener('resize',()=>{if(ck.on&&ckV.dataset.s==='sink')skPlace()});
+async function ckWash(){
+  const sk=$('#ckSink'),tap=$('#ckTap');
+  ckV.dataset.s='sink';skSet(0);
+  sk.querySelectorAll('.ckW').forEach(e=>e.remove());
+  ck.sel.forEach(k=>{const b=document.createElement('button');b.className='ckW';b.dataset.n='0';b.innerHTML=ingIcon(k);b.style.opacity=0;sk.appendChild(b)});
+  skPlace();ckSay('재료를 씻자~! 수도꼭지를 눌러줘!');tap.classList.add('on');
+  await new Promise(r=>{tap.onclick=r;setTimeout(r,20000)});tap.onclick=null;tap.classList.remove('on');
+  skSet(1);await waitMs(1100);skSet(2);ckSay('재료를 눌러서 문질러줘~!');
+  const ws=[...sk.querySelectorAll('.ckW')];ws.forEach(e=>e.style.opacity=1);
+  await new Promise(res=>{let left=ws.length;
+    ws.forEach(e=>e.onclick=()=>{
+      const n=+e.dataset.n+1;e.dataset.n=n;e.classList.remove('rub');void e.offsetWidth;e.classList.add('rub');
+      e.style.filter='sepia('+(.7*(1-n/4))+') brightness('+(.82+.18*n/4)+') saturate('+(.8+.2*n/4)+')';
+      const b=document.createElement('span');b.className='ckBub';b.textContent=n>=4?'✨':'🫧';b.style.left=(e.offsetLeft+Math.random()*e.offsetWidth*.7)+'px';b.style.top=(e.offsetTop-e.offsetHeight*.3)+'px';sk.appendChild(b);setTimeout(()=>b.remove(),1000);
+      if(n>=4){e.style.filter='';e.classList.add('clean');if(!--left)res()}
+    })});
+  await waitMs(500);skSet(3);ckSay('깨끗해졌다~!');await waitMs(1300);
+  ws.forEach(e=>e.classList.add('gone'));await waitMs(500);ws.forEach(e=>e.remove());
+  ckSay('물이 빠져요~');skSet(4);await waitMs(1400);skSet(0);await waitMs(1300);ckSay('');   // 물 빠지기: 가득 → 조금 → 빈 싱크대
+}
 function cookClose(){
   ckV.classList.remove('show','chi','pick');setTimeout(()=>{ckV.classList.remove('on');ck.on=false;hEvt=false;ck.step=''},480);
 }
 async function cookGo(){
   if(ck.step!=='pick'||!ck.sel.length)return;
-  ck.step='stove';ckV.classList.remove('pick');ckV.dataset.s='stove';ckSay('냄비를 눌러 저어봐~! 초록일 때 불 끄기!');
+  ck.step='wash';ckV.classList.remove('pick');await ckWash();ck.step='stove';ckV.dataset.s='stove';ckSay('냄비를 눌러 저어봐~! 초록일 때 불 끄기!');
   const pot=$('#ckPot'),mk=$('#ckMk');
   const pos=await new Promise(res=>{let v=0,raf,done=false;const t0=performance.now();
     const fin=()=>{if(done)return;done=true;cancelAnimationFrame(raf);$('#ckStop').onclick=null;res(v)};
