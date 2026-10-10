@@ -558,6 +558,17 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
 .gspot{z-index:1;width:64px;height:64px;transform:translate(-50%,-50%);border:0;border-radius:50%;padding:0;font-size:28px;display:flex;align-items:center;justify-content:center;pointer-events:auto;background:radial-gradient(circle,rgba(255,255,215,.95) 0 22%,rgba(255,244,160,.55) 48%,rgba(255,244,160,0) 72%);animation:gtw 1.8s ease-in-out infinite}
 @keyframes gtw{50%{transform:translate(-50%,-50%) scale(1.18);filter:brightness(1.15)}}
 .gspot.pick{animation:none;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.35);transition:left .5s ease-in,top .5s ease-in,opacity .5s,transform .5s}
+/* ---- 첫 요리: 레시피 도감 발견 연출 ---- */
+#ckIntro{position:absolute;inset:0;z-index:1800;display:none;opacity:0;transition:opacity .8s;overflow:hidden;background:#d9a85c}
+#ckIntro.on{display:block}#ckIntro.show{opacity:1}
+#ckIntro .ciBlur{position:absolute;inset:-6%;background:url(img/minigame/cook/recipe-closed.webp) center/cover;filter:blur(16px) saturate(1.1)}
+#ckIntro .ciImg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .9s;animation:fgbob 3.2s ease-in-out infinite}
+#ckIntro #ciOpen{opacity:0}#ckIntro.open #ciOpen{opacity:1}#ckIntro.open #ciClosed{opacity:0}
+#ckIntro .ciFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#ckIntro.flash .ciFlash{animation:fgfl 1s ease-out both}
+#ciText{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 17%);text-align:center;font-size:clamp(22px,6.4vw,34px);font-weight:800;color:#fff;text-shadow:0 2px 0 #9a6a2f,0 0 10px rgba(120,70,20,.75);min-height:1.4em;padding:0 12px}
+#ciHint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 7%);text-align:center;color:#fff;font-size:14px;font-weight:700;text-shadow:0 1px 4px rgba(120,70,20,.85);opacity:0;transition:opacity .5s}
+#ciHint.on{opacity:1;animation:fgblink 1.6s ease-in-out infinite}
 #ckV{position:absolute;inset:0;z-index:1700;display:none;opacity:0;transition:opacity .45s;background:#2a1f16;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 #ckV.on{display:block}#ckV.show{opacity:1}
 .ckBg{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity .8s}
@@ -750,6 +761,14 @@ body{font-family:"Berry","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sa
       <button data-t="ball"><img src="img/minigame/wash/wash-ball.webp" alt="" draggable="false">샤워볼</button>
       <button data-t="shower"><img src="img/minigame/wash/wash-shower.webp" alt="" draggable="false">샤워기</button>
     </div>
+  </div>
+  <div id="ckIntro">
+    <div class="ciBlur"></div>
+    <img class="ciImg" id="ciClosed" src="img/minigame/cook/recipe-closed.webp" alt="" draggable="false">
+    <img class="ciImg" id="ciOpen" src="img/minigame/cook/recipe-open.webp" alt="" draggable="false">
+    <div class="ciFlash"></div>
+    <div id="ciText"></div>
+    <div id="ciHint">화면을 눌러 계속하기</div>
   </div>
   <div id="ckV">
     <div class="ckBg" id="ckB1"></div><div class="ckBg" id="ckB2"></div>
@@ -1233,7 +1252,7 @@ let lastTap={t:0,x:0,y:0};
 stage.addEventListener('pointerdown',e=>{
   knockTok++;knocking=false;   // 터치하면 노크 연출은 접어요
   if(statOn){showStat(false);pet=null;return}   // 상태창이 떠 있으면 한 번 더 터치해서 닫기
-  if(fEvt||e.target.closest('.ui,#fan,.door,.hot,#tubView,#washView,.ffly,#fishGet,#bookView,#ckV'))return;
+  if(fEvt||e.target.closest('.ui,#fan,.door,.hot,#tubView,#washView,.ffly,#fishGet,#bookView,#ckV,#ckIntro'))return;
   if(HA.on&&!hEvt&&!hLeaving){   // 놀러 온 하치와레를 눌렀거나 문지르는 중 (치이카와와 겹치면 앞에 있는 쪽)
     const hr=hc.getBoundingClientRect(),cr=ch.getBoundingClientRect();
     const onH=e.clientX>=hr.left&&e.clientX<=hr.right&&e.clientY>=hr.top&&e.clientY<=hr.bottom;
@@ -2021,7 +2040,7 @@ $('#bkPrev').addEventListener('click',()=>bkFlip(-1));
 $('#bkNext').addEventListener('click',()=>bkFlip(1));
 bkV.addEventListener('pointerdown',e=>{bkX=e.clientX;bkY=e.clientY;bkTapOK=!e.target.closest('#bkBar,#bkClose')});
 bkV.addEventListener('pointerup',e=>{if(bkX==null)return;const dx=e.clientX-bkX,dy=e.clientY-bkY;bkX=null;if(Math.abs(dx)>45)bkFlip(dx<0?1:-1);else if(Math.abs(dx)<10&&Math.abs(dy)<10&&bkTapOK)bkTap(e)});
-['#fishGet','#bookView'].forEach(sel=>['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>$(sel).addEventListener(t,e=>e.stopPropagation())));   // 낚시·도감 화면 위에서는 캐릭터가 걸어가지 않게
+['#fishGet','#bookView','#ckIntro'].forEach(sel=>['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>$(sel).addEventListener(t,e=>e.stopPropagation())));   // 낚시·도감 화면 위에서는 캐릭터가 걸어가지 않게
 addEventListener('resize',()=>{if(bkOn)bkFit()});addEventListener('orientationchange',()=>setTimeout(()=>{if(bkOn)bkFit()},250));
 renderBookBtn(false);
 
@@ -2563,8 +2582,27 @@ function ckRender(){
 }
 $('#ckTray').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||ck.step!=='pick'||ck.sel.length>=3)return;ck.sel.push(b.dataset.k);ckRender()});
 $('#ckSlots').addEventListener('click',e=>{const i=e.target.closest('span');if(!i||ck.step!=='pick')return;ck.sel.splice(+i.dataset.i,1);ckRender()});
+// 처음 요리하기를 누르면: 낯선 책 발견 -> 레시피 도감! (첫 낚시 도감 연출과 같은 방식, 한 번만)
+let ciReady=false,ciTok=0;
+const ciType=(msg,ms=75)=>new Promise(r=>{const tx=$('#ciText');tx.textContent='';let i=0;const iv=setInterval(()=>{i++;tx.textContent=msg.slice(0,i);if(i>=msg.length){clearInterval(iv);r()}},ms)});
+const ciTap=()=>new Promise(r=>{$('#ciHint').classList.add('on');ciReady=true;const f=()=>{if(!ciReady)return;ciReady=false;$('#ciHint').classList.remove('on');$('#ckIntro').removeEventListener('click',f);r()};$('#ckIntro').addEventListener('click',f)});
+async function cookIntro(){
+  const v=$('#ckIntro');hEvt=true;
+  v.classList.remove('open','flash');$('#ciText').textContent='';$('#ciHint').classList.remove('on');
+  v.classList.add('on');void v.offsetWidth;v.classList.add('show');   // 페이드로 책 화면
+  await waitMs(1300);
+  await ciType('어 이 책은 뭐지...?');await ciTap();
+  $('#ciText').textContent='';v.classList.add('open','flash');   // 책이 펼쳐져요
+  await waitMs(1200);
+  await ciType('레시피 도감이구나!');await waitMs(1500);
+  await ciType('맛있는 요리들을 찾아나가 보자~');await ciTap();
+  S.cookIntro=true;save();
+  v.classList.remove('show');await waitMs(850);
+  v.classList.remove('on','open','flash');$('#ciText').textContent='';hEvt=false;
+}
 async function cookOpen(){
   if(ck.on||sleeping||moving||hEvt||(curRoom!=='kitchen'&&curRoom!=='living'))return;
+  if(!S.cookIntro){await cookIntro();if(sleeping||moving||hEvt)return}
   if(!Object.values(S.pan||{}).some(n=>n>0)){say('재료가 없어… 낚시터나 숲에서 모아보자!',2600);return}
   [0,1,2,3,4].forEach(i=>{new Image().src='img/bg/sink-'+i+'.webp'});ck.on=true;hEvt=true;ck.sel=[];ck.step='intro';ckV.dataset.s='counter';ckV.className='on';ckRender();ckPlace();
   void ckV.offsetWidth;ckV.classList.add('show','chi');
@@ -2619,7 +2657,7 @@ async function ckWash(){
     })});
   await waitMs(500);skSet(3);ckSay('깨끗해졌다~!');await waitMs(1300);
   ws.forEach(e=>e.classList.add('gone'));await waitMs(500);ws.forEach(e=>e.remove());
-  ckSay('물이 빠져요~');skSet(4);await waitMs(1400);skSet(0);await waitMs(1300);ckSay('');   // 물 빠지기: 가득 → 조금 → 빈 싱크대
+  skSet(4);await waitMs(1400);skSet(0);await waitMs(1300);ckSay('');   // 물 빠지기: 가득 → 조금 → 빈 싱크대
 }
 function cookClose(){
   ckV.classList.remove('show','chi','pick');setTimeout(()=>{ckV.classList.remove('on');ck.on=false;hEvt=false;ck.step=''},480);
@@ -2660,7 +2698,7 @@ $('#ckDexBox').addEventListener('click',()=>ckDexShow(false));
 $('#ckPot').addEventListener('click',e=>{const p=e.currentTarget;p.classList.remove('stir');void p.offsetWidth;p.classList.add('stir')});
 ['pointerdown','pointermove','pointerup','pointercancel'].forEach(t=>ckV.addEventListener(t,e=>e.stopPropagation()));
 $('#world2').insertAdjacentHTML('beforeend','<button class="door" id="cookBtn"><b>🍳</b>요리하기</button>');
-$('#world').insertAdjacentHTML('beforeend','<button class="door" id="cookBtn2" style="left:620px;top:690px"><b>🍳</b>요리하기</button>');   // 거실에서도 요리할 수 있어요
+$('#world').insertAdjacentHTML('beforeend','<button class="door" id="cookBtn2" style="left:400px;top:735px"><b>🍳</b>요리하기</button>');   // 거실에서도 요리할 수 있어요
 
 // ---- 숲 채집: 풀숲·나무 밑에서 반짝이는 재료를 주워요 (최대 5곳, 줍고 나면 3~15분 뒤 새 자리가 랜덤으로 생겨요) ----
 const GZ={   // 구역별 재료와 자리 후보 (숲 그림 좌표)
